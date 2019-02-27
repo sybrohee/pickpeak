@@ -35,7 +35,7 @@ peaks.to.markers <- function(fsa.data) {
     
     for (dyei in dyes) {
         for (idi in ids) {
-            peaks.dt <- data.table(findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]]))
+            peaks.dt <- data.table(findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]], zero = "+",minpeakdist = 5, minpeakheight = 30))
 #             print(peaks.dt)
 #             stop()
             model.id <- fsa.data$standardized.data$models[[idi]]
@@ -54,7 +54,7 @@ peaks.to.markers <- function(fsa.data) {
             }
         }
     }
-    print(all.peaks.dt)
+#     print(all.peaks.dt)
     markers <- fsa.data$markers
     setkey(markers, "dye", "start.pos", "end.pos")
     all.peaks.overlaps <-  foverlaps(all.peaks.dt, markers , by.x=c("dye", "startpos.size", "endpos.size"))
@@ -76,7 +76,7 @@ scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', stand
     scalei <- scales[[ladder]]
     for (idi in ids) {
 
-        peaks.dt <- data.table(findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = 600))
+        peaks.dt <- data.table(findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = 600, zero = "+"))
         names(peaks.dt) <- c("peak.height", "peak.maxpos", "peak.startpos", "peak.minpos")
 
         valid.peaks <- tail(peaks.dt, n = length(scalei))

@@ -5,12 +5,14 @@ source("sampleSelector.R")
 source("dyeSelector.R")
 source("scaleSelector.R")
 source("multipleExperimentViewer.R")
+source("singleExperimentViewer.R")
 source("linearRegressionViewer.R")
 source("peakAnalyzer.R")
 source("heightSelector.R")
 source("widthSelector.R")
 source("rawData.R")
 source("rawDataFilter.R")
+source("singleExperimentFiltersAndLayouts.R")
 
 
 
@@ -19,6 +21,7 @@ shinyServer(function(input, output,session) {
       selected.samples <- callModule(sampleSelector, "mysampleselector")
       selected.dyes <- callModule(dyeSelector, "mydyeselector", reactive(fsa.data$data))
       rawDataPeaksFilter <- callModule(rawDataPeaksFilter, "rawdatapeaksfilter", reactive(fsa.data$data))
+      singleExperimentFiltersAndLayouts <- callModule(singleExperimentFiltersAndLayouts,'mySingleExperimentFiltersAndLayouts',reactive(fsa.data))
       selected.scale <- callModule(scaleSelector, "myscaleselector", reactive(fsa.data$data))
       selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)      
       selected.analysis <- callModule(peakAnalyzer, "mypeakanalyzer", selected.scale, reactive(fsa.data))
@@ -54,6 +57,7 @@ shinyServer(function(input, output,session) {
         print(fsa.data$standardized.data$intensities)
         callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data,selected.height, selected.width,selected.scale, selected.dyes)
         
+        
       })
       observe({
         req(selected.samples$selectedSamples()$datapath)        
@@ -64,7 +68,7 @@ shinyServer(function(input, output,session) {
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
         fsa.data$peaks <- peaks.to.markers(fsa.data)
-        print(fsa.data$peaks)
+        callModule(singleExperimentViewer, "mySingleExperimentViewer", fsa.data, singleExperimentFiltersAndLayouts$singleExperimentFilterDyes, singleExperimentFiltersAndLayouts$singleExperimentFilterExp, singleExperimentFiltersAndLayouts$singleExperimentYaxis)
       })
    
 })

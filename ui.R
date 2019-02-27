@@ -3,10 +3,12 @@ source("peakAnalyzer.R")
 source("dyeSelector.R")
 source("scaleSelector.R")
 source("multipleExperimentViewer.R")
+source("singleExperimentViewer.R")
 source("heightSelector.R")
 source("widthSelector.R")
 source("rawData.R")
 source("rawDataFilter.R")
+source("singleExperimentFiltersAndLayouts.R")
 
 source("linearRegressionViewer.R")
 
@@ -39,7 +41,13 @@ shinyUI(
                 fluidRow(
                     column(5, rawDataPeaksFilterUI('rawdatapeaksfilter'))
                 )
-            )
+            ),
+            conditionalPanel(
+                condition = "input.tabs1 == 'Single experiment viewer'",
+                fluidRow(
+                    column(7, singleExperimentFiltersAndLayoutsUI('mySingleExperimentFiltersAndLayouts'))
+                )
+            )            
         ),
         column(
             10,
@@ -50,6 +58,11 @@ shinyUI(
                     "Multiple experiment viewer",
                     multipleExperimentViewerUI("myMultipleExperimentViewer")
                 ),
+                tabPanel(
+                    "Single experiment viewer",
+                    singleExperimentViewerUI("mySingleExperimentViewer")
+                ),                
+     
                 tabPanel(
                     "Standardization",
                     linearRegressionViewerUI("myLinearRegressionViewer")
