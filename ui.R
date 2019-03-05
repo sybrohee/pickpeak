@@ -8,6 +8,7 @@ source("heightSelector.R")
 source("widthSelector.R")
 source("rawData.R")
 source("rawDataFilter.R")
+source("singleExperimentPeakAnalyzer.R")
 source("singleExperimentFiltersAndLayouts.R")
 
 source("linearRegressionViewer.R")
@@ -17,10 +18,11 @@ library(plotly)
 
 shinyUI(
   fluidPage(
+    tags$head(tags$style(HTML('#peakFilterPanel {border: 1px solid #D7D7D7; border-radius: 5px;}'))),  
     fluidRow(
         column(
             2, 
-            sampleSelectorUI("mysampleselector"),
+            column(10, sampleSelectorUI("mysampleselector")),
             conditionalPanel(
                 condition = "input.tabs1 == 'Multiple experiment viewer'",
                 fluidRow(
@@ -44,8 +46,15 @@ shinyUI(
             ),
             conditionalPanel(
                 condition = "input.tabs1 == 'Single experiment viewer'",
-                fluidRow(
-                    column(7, singleExperimentFiltersAndLayoutsUI('mySingleExperimentFiltersAndLayouts'))
+                column(1, fluidRow()),
+                column(11, 
+                    fluidRow(
+                        column(10, id = 'peakFilterPanel',singleExperimentFiltersAndLayoutsUI('mySingleExperimentFiltersAndLayouts'))
+                    ),
+                    HTML("<br><br><br>"),
+                    fluidRow(
+                        column(10, id = 'peakFilterPanel', singleExperimentPeakAnalyzerUI('mySingleExperimentPeakAnalyzer'))
+                    )
                 )
             )            
         ),

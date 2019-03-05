@@ -13,6 +13,7 @@ source("widthSelector.R")
 source("rawData.R")
 source("rawDataFilter.R")
 source("singleExperimentFiltersAndLayouts.R")
+source("singleExperimentPeakAnalyzer.R")
 
 
 
@@ -28,10 +29,8 @@ shinyServer(function(input, output,session) {
       selected.height <- callModule(heightSelector, "myheightselector", reactive(fsa.data), selected.dyes)
       selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)
       callModule(rawDataViewer, "myrawdataviewer", reactive(fsa.data), rawDataPeaksFilter)
-      
       observe({
         req(selected.samples$selectedSamples()$datapath)
-        print(selected.samples$selectedSamples()$datapath)
         fsa.data$data <- my.read.fsa(selected.samples$selectedSamples()$datapath)
 
       })
@@ -68,7 +67,9 @@ shinyServer(function(input, output,session) {
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
         fsa.data$peaks <- peaks.to.markers(fsa.data)
-        callModule(singleExperimentViewer, "mySingleExperimentViewer", fsa.data, singleExperimentFiltersAndLayouts$singleExperimentFilterDyes, singleExperimentFiltersAndLayouts$singleExperimentFilterExp, singleExperimentFiltersAndLayouts$singleExperimentYaxis)
+        selected.peak <- callModule(singleExperimentViewer, "mySingleExperimentViewer", fsa.data, singleExperimentFiltersAndLayouts$singleExperimentFilterDyes, singleExperimentFiltersAndLayouts$singleExperimentFilterExp, singleExperimentFiltersAndLayouts$singleExperimentYaxis,singleExperimentFiltersAndLayouts$singleExperimentFilterSystem, singleExperimentFiltersAndLayouts$singleExperimentSystemDyeSelector,singlePeakAnalyzer$minValueFilterThresholdField, singlePeakAnalyzer$minValueFilterThresholdButton, singlePeakAnalyzer$includeExcludeButton )
+        singlePeakAnalyzer <- callModule(singleExperimentPeakAnalyzer, "mySingleExperimentPeakAnalyzer", reactive(selected.peak$selected.peak()) )     
+        
       })
    
 })
