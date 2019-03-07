@@ -1,6 +1,7 @@
 library(data.table)
 library(plotly)
 source("functions.R")
+source("exportPeaks.R")
 source("sampleSelector.R")
 source("dyeSelector.R")
 source("scaleSelector.R")
@@ -18,6 +19,11 @@ source("singleExperimentPeakAnalyzer.R")
 
 
 shinyServer(function(input, output,session) {
+      colors <- list("6-FAM" = list(color = '#0101DF', cval = "blue"),
+                "VIC" =  list(color = '#31B404', cval = "green"),
+                "NED" = list(color = '#FFFF00', cval = "yellow"),
+                "PET" =  list(color = '#FF0000', cval = "red"),
+                "LIZ" =  list(color = '#FFBF00', cval = "orange"))
       fsa.data <- reactiveValues(data = NULL, standardized.data = NULL, markers = NULL, peaks = NULL)
       selected.samples <- callModule(sampleSelector, "mysampleselector")
       selected.dyes <- callModule(dyeSelector, "mydyeselector", reactive(fsa.data$data))
@@ -54,7 +60,7 @@ shinyServer(function(input, output,session) {
         req(selected.width$selectedWidth())
         req(fsa.data$standardized.data$intensities)
         print(fsa.data$standardized.data$intensities)
-        callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data,selected.height, selected.width,selected.scale, selected.dyes)
+        callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data,colors, selected.height, selected.width,selected.scale, selected.dyes)
         
         
       })
@@ -67,9 +73,9 @@ shinyServer(function(input, output,session) {
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
         fsa.data$peaks <- peaks.to.markers(fsa.data)
-        selected.peak <- callModule(singleExperimentViewer, "mySingleExperimentViewer", fsa.data, singleExperimentFiltersAndLayouts$singleExperimentFilterDyes, singleExperimentFiltersAndLayouts$singleExperimentFilterExp, singleExperimentFiltersAndLayouts$singleExperimentYaxis,singleExperimentFiltersAndLayouts$singleExperimentFilterSystem, singleExperimentFiltersAndLayouts$singleExperimentSystemDyeSelector,singlePeakAnalyzer$minValueFilterThresholdField, singlePeakAnalyzer$minValueFilterThresholdButton, singlePeakAnalyzer$includeExcludeButton )
-        singlePeakAnalyzer <- callModule(singleExperimentPeakAnalyzer, "mySingleExperimentPeakAnalyzer", reactive(selected.peak$selected.peak()) )     
-        
+        selected.peaks <- callModule(singleExperimentViewer, "mySingleExperimentViewer", fsa.data, colors, singleExperimentFiltersAndLayouts$singleExperimentFilterDyes, singleExperimentFiltersAndLayouts$singleExperimentFilterExp, singleExperimentFiltersAndLayouts$singleExperimentYaxis,singleExperimentFiltersAndLayouts$singleExperimentFilterSystem, singleExperimentFiltersAndLayouts$singleExperimentSystemDyeSelector,singlePeakAnalyzer$minValueFilterThresholdField, singlePeakAnalyzer$minValueFilterThresholdButton, singlePeakAnalyzer$includeExcludeButton )
+        singlePeakAnalyzer <- callModule(singleExperimentPeakAnalyzer, "mySingleExperimentPeakAnalyzer", reactive(selected.peaks$selected.peak()) )     
+        callModule(exportPeaks, "myExportPeaks",  reactive(selected.peaks$exportPeaksTable()), colors, selected.analysis$selectedMarkers, selected.analysis$markersList, reactive(fsa.data$data$expdate), singleExperimentFiltersAndLayouts$singleExperimentFilterExp)
       })
    
 })

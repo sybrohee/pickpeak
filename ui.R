@@ -8,6 +8,7 @@ source("heightSelector.R")
 source("widthSelector.R")
 source("rawData.R")
 source("rawDataFilter.R")
+source("exportPeaks.R")
 source("singleExperimentPeakAnalyzer.R")
 source("singleExperimentFiltersAndLayouts.R")
 
@@ -51,10 +52,14 @@ shinyUI(
                     fluidRow(
                         column(10, id = 'peakFilterPanel',singleExperimentFiltersAndLayoutsUI('mySingleExperimentFiltersAndLayouts'))
                     ),
-                    HTML("<br><br><br>"),
+                    HTML("<br><br>"),
                     fluidRow(
                         column(10, id = 'peakFilterPanel', singleExperimentPeakAnalyzerUI('mySingleExperimentPeakAnalyzer'))
-                    )
+                    ),
+                    HTML("<br><br>"),
+                    fluidRow(
+                        column(10, id = 'peakFilterPanel', exportPeaksUI('myExportPeaks'))
+                    )                    
                 )
             )            
         ),

@@ -22,17 +22,20 @@ singleExperimentPeakAnalyzerUI <- function(id){
 # module server function
 singleExperimentPeakAnalyzer <- function(input,output, session, selectedPeak) {
   ns <- session$ns
+  selected.peak.table <- reactive({
+        data.table(
+            c("system", "dye","size", "height"),
+            c(selectedPeak()$system, selectedPeak()$dye, floor(selectedPeak()$size),selectedPeak()$height) 
+        )    
+  })
+  
   output$selectedPeak <- renderText({
     req(selectedPeak())
     "<b>Selected peak</b><br>"
   })
   output$selectedPeakDT <- renderDataTable({
     req(selectedPeak())
-    datatable(
-        data.table(
-            c("system", "dye","size", "height"),
-            c(selectedPeak()$system, selectedPeak()$dye, floor(selectedPeak()$size),selectedPeak()$height) 
-        ),
+    datatable(selected.peak.table(),
         rownames = FALSE,
         colnames = "",
         selection = 'none',
@@ -42,7 +45,6 @@ singleExperimentPeakAnalyzer <- function(input,output, session, selectedPeak) {
             dom = 't'
         )
     )
-
   })
   
   output$includeExcludeButton <- renderUI({
@@ -53,6 +55,8 @@ singleExperimentPeakAnalyzer <- function(input,output, session, selectedPeak) {
     }
     actionButton(ns("includeExcludeButton"), text)
   })
+  
+  
   
   return(list(minValueFilterThresholdField = reactive(input$minValueFilterThresholdField),
                 minValueFilterThresholdButton = reactive(input$minValueFilterThresholdButton),

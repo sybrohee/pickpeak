@@ -6,22 +6,33 @@ my.read.fsa <- function(files) {
   result <- list()
   abif.data <- data.table()
   dyes <- c()
+  expdate <- c()
   for (file in files) {
     abif <- read.abif(file)
     abif.data.i <- data.table(abif$Data$DATA.1, abif$Data$DATA.2, abif$Data$DATA.3, abif$Data$DATA.4,  abif$Data$DATA.105)
-    dyes.i <- c(abif$Data$DyeN.1, abif$Data$DyeN.2, abif$Data$DyeN.3, abif$Data$DyeN.4,  abif$Data$DyeN.5)  
+    dyes.i <- c(abif$Data$DyeN.1, abif$Data$DyeN.2, abif$Data$DyeN.3, abif$Data$DyeN.4,  abif$Data$DyeN.5) 
+    
     names(abif.data.i) <- dyes.i
     dyes <- dyes.i
     names(dyes) <- c("DyeN.1", "DyeN.2","DyeN.3","DyeN.4","DyeN.5")
     abif.data.i$id <- abif$Data$SpNm.1
     abif.data.i$time <- 1:nrow(abif.data.i)
+    day <- paste0("0", abif$Data$RUND.1$day)
+    month <- paste0("0", abif$Data$RUND.1$month)
+    year <- toString(abif$Data$RUND.1$year)
+    
+    expdate[abif.data.i$id] <- paste0(substr(day, nchar(day)-1, nchar(day)),
+                         substr(month, nchar(month)-1, nchar(month)),
+                         substr(year, nchar(year)-1, nchar(year))
+                         )
+    
     if (nrow(abif.data) == 0) {
       abif.data <- abif.data.i
     } else {
       abif.data <- rbind(abif.data, abif.data.i)
     }
   }
-  return (list (intensities = abif.data, dyes = dyes))
+  return (list (intensities = abif.data, dyes = dyes, expdate = expdate))
 
 }
 

@@ -1,3 +1,2 @@
-analysis	marker.file
-aneuploidies	markers_qstr_elucigene.tab
- 
+analysis	marker.file	runName
+aneuploidies	markers_qstr_elucigene.tab	Aneu
