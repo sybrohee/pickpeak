@@ -16,7 +16,7 @@ scaleSelector <- function(input,output,session, data) {
   ns <- session$ns
   output$selectedScale <- renderUI({
     req(data()$dyes)
-    selectInput(ns("selectedScale"), label = "Ladder",  choices = c("Raw", "LIZ500"), selected = 'Raw')
+    selectInput(ns("selectedScale"), label = "Ladder",  choices = c("Raw", "LIZ500", 'ILS500'), selected = 'Raw')
   })
   output$scalingDye <- renderUI({
     req(data()$dyes)

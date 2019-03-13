@@ -1,2 +1,4 @@
 analysis	marker.file	runName
 aneuploidies	markers_qstr_elucigene.tab	Aneu
+paternity_v16	markers_PowerPlex_ESX_16_v1.0.tab	Pat
+paternity_v17	markers_PowerPlex_ESX_17_v1.0.tab	Pat

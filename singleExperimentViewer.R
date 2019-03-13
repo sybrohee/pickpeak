@@ -53,15 +53,14 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     })
     observeEvent(input$filteredOutPeaks_rows_selected, {
       selected.peak$peak <- peaksToFilterOutDT()[input$filteredOutPeaks_rows_selected,]
-
       selectRows(proxySE, NULL)
-
-    })    
+    })
+    
     observeEvent(input$exportPeaksTable_rows_selected, {
       selected.peak$peak <- peaksToExportDT()[input$exportPeaksTable_rows_selected,]
-
       selectRows(proxyFO, NULL)
-    })    
+    })
+    
 
     
     peaksToExportDT <- reactive({
@@ -171,7 +170,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
             color = "#000000"
         )
         req(length(singleExperimentFilterDyes()) > 0 || length(singleExperimentFilterSystem()) > 0)
-        selected.peak <- peaksToExportDT()[input$exportPeaksTable_rows_selected]
+        selected.peak <- selected.peak$peak
 
         idi <- singleExperimentFilterExp()
         dyes <- unique(annotated.peaks$mypeaks$dye) 
@@ -196,7 +195,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
           intensities.id <- intensities[id == idi  & intensities$sizes >= startpos & intensities$sizes <= endpos]
           if (nrow(intensities.id) == 0) next;
           annots <- list( text = paste(dyei, systemi), font = f, xref = 'paper', yref ='paper', yanchor = "bottom", xanchor = "center", align = "center",  x = 0.5,  y = 1,  showarrow = FALSE )
-          p <- plot_ly() %>% layout(annotations = annots, yaxis = list(range = singleExperimentYaxis()));
+          p <- plot_ly( ) %>% layout(annotations = annots, yaxis = list(range = singleExperimentYaxis()));
           p <- add_trace(p, x = intensities.id[['sizes']], y= intensities.id[,get(dyei)],  type = 'scatter', mode = 'lines', line = list(color =  colors[[dyei]]$color), showlegend = F, hoverinfo = 'x+y')
           curves <- append(curves, paste("points",systemi, idi,dyei, sep = "%%"))
           if (length( annotated.peaks$mypeaks[!is.na(system) & system == systemi &id == idi & keep == T &  dye == dyei][['maxpos.size']]) > 0) { 
@@ -205,7 +204,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
           }
         
           plots[[systemi]] <- p 
-          if (nrow(selected.peak) > 0 &&  selected.peak$system == systemi) {
+          if (!is.null(selected.peak) &&  selected.peak$keep && selected.peak$system == systemi) {
             rect.col <- "blue"
             opacity = 0.3
             plotnb <- length(plots)
@@ -226,59 +225,25 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
         req(!is.null(selected.peak$onclick))
         curve.nb <- selected.peak$onclick[['curveNumber']]
         curve.id <- curves.description$curves[curve.nb]
-        curve.id.vec <- strsplit(curve.id, "%%")[[1]]
-        print(selected.peak$onclick )
-        print(curve.nb)
-        print(curve.id)
-        systemi <- curve.id.vec[2]
-        idi <- curve.id.vec[3]
-        dyei <- curve.id.vec[4]
-        peak <-  annotated.peaks$mypeaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei  & peak.height == selected.peak$onclick$y]
-        if (nrow(peak) > 0) {
-            selected.peak$peak <- peaksToExportDT()[system == systemi & height == selected.peak$onclick$y ]
+        if (is.character(curve.id) ) {
+            curve.id.vec <- vector()
+            curve.id.vec.list <- strsplit(curve.id, "%%")
+            if (length(curve.id.vec.list) > 0) {
+                curve.id.vec <- curve.id.vec.list[[1]]
+            }
+
+            systemi <- curve.id.vec[2]
+            idi <- curve.id.vec[3]
+            dyei <- curve.id.vec[4]
+            peak <-  annotated.peaks$mypeaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei  & peak.height == selected.peak$onclick$y]
+            if (nrow(peak) > 0 && length(curve.id.vec) > 0) {
+                selected.peak$peak <- peaksToExportDT()[system == systemi &  floor(peaksToExportDT()$size) == floor(selected.peak$onclick$x) & height == selected.peak$onclick$y ]
+            }
         }
-        
 
 
     })
-    
-    
-    
-#     output$selectOnClick <- DT::renderDataTable({
-#       req(fsa.data$peaks)
-#       d <- event_data("plotly_click")
-#       
-# 
-#       curve.id <- curves.description$curves[d$curveNumber+1]
-#       curve.id.vec <- strsplit(curve.id, "%%")[[1]]
-#       sample.id <- curve.id.vec[2]
-#       channel <- curve.id.vec[3]
-#       xval <- d$x
-#       yval <- d$y
-#       peak <- fsa.data$peaks[id == sample.id & dye == channel & floor(maxpos.size) == floor(xval) & peak.height == yval]
-#       req(nrow(peak) > 0)
-# 
-#       mssystem <- peak[["system"]]
-#       maxtime <- peak[["peak.maxpos.time"]]
-#       starttime <- peak[["peak.startpos.time"]]
-#       endtime <- peak[["peak.endpos.time"]]
-#       maxsize <- peak[["maxpos.size"]]
-#       startsize <- peak[["startpos.size"]]
-#       endsize <- peak[["endpos.size"]]      
-#       height <- peak[["peak.height"]]
-#       result.vec <- c(
-#         sample = sample.id,
-#         position = paste0(floor(maxsize), " (",floor(startsize),"-",floor(endsize), ")"),
-#         intensity = height,
-#         time = paste0(maxtime, " (",starttime,"-",endtime, ")")
-#      )
-#      result.dt <- data.table(result.vec)
-#      row.names(result.dt) <- names(result.vec)
-#      names(result.dt) <- paste(mssystem, channel)
-#      datatable(result.dt, options = list(dom = 't'))
-#     })        
-    
-    
+
     
     return(list(selected.peak = reactive(selected.peak$peak),
                 exportPeaksTable = reactive(peaksToExportDT())))

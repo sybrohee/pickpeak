@@ -9,6 +9,7 @@ source("widthSelector.R")
 source("rawData.R")
 source("rawDataFilter.R")
 source("exportPeaks.R")
+source("analysisParameters.R")
 source("singleExperimentPeakAnalyzer.R")
 source("singleExperimentFiltersAndLayouts.R")
 
@@ -26,18 +27,34 @@ shinyUI(
             column(10, sampleSelectorUI("mysampleselector")),
             conditionalPanel(
                 condition = "input.tabs1 == 'Multiple experiment viewer'",
-                fluidRow(
-                    column(5, dyeSelectorUI("mydyeselector")),
-                    column(5, 
-                        fluidRow(
-                            heightSelectorUI("myheightselector"),
-                            widthSelectorUI("mywidthselector")
+                column(1, fluidRow()),
+                column(11, 
+                    fluidRow(
+                        column(10, id = 'peakFilterPanel', analysisParametersUI("myAnalysisParameters"))
+                       
+                    ),
+                    HTML("<br>"),
+                    fluidRow(
+                        column(10, id = 'peakFilterPanel', 
+                                            scaleSelectorUI("myscaleselector"),
+                                            peakAnalyzerUI("mypeakanalyzer")
                         )
-                    
+                    ),
+                    HTML("<br>"),
+                    fluidRow(
+                        column(5, dyeSelectorUI("mydyeselector")),
+                        column(5, 
+                            fluidRow(
+                                heightSelectorUI("myheightselector"),
+                                widthSelectorUI("mywidthselector")
+                            )
+                        
+                        )
                     )
-                ),
-                scaleSelectorUI("myscaleselector"),
-                peakAnalyzerUI("mypeakanalyzer")
+
+                )
+
+                
             ),
             conditionalPanel(
                 condition = "input.tabs1 == 'Raw data' && input.tabsData == 'Peaks'",
@@ -52,11 +69,11 @@ shinyUI(
                     fluidRow(
                         column(10, id = 'peakFilterPanel',singleExperimentFiltersAndLayoutsUI('mySingleExperimentFiltersAndLayouts'))
                     ),
-                    HTML("<br><br>"),
+                    HTML("<br>"),
                     fluidRow(
                         column(10, id = 'peakFilterPanel', singleExperimentPeakAnalyzerUI('mySingleExperimentPeakAnalyzer'))
                     ),
-                    HTML("<br><br>"),
+                    HTML("<br>"),
                     fluidRow(
                         column(10, id = 'peakFilterPanel', exportPeaksUI('myExportPeaks'))
                     )                    

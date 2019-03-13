@@ -6,7 +6,9 @@ library(DT)
 peakAnalyzerUI <- function(id){
   ns <- NS(id)
   fluidRow(
-    column(6,uiOutput(ns("markers")))
+    column(12, uiOutput(ns("markers"))),
+    column(12, uiOutput(ns("removeStutters")))
+    
   )
 }
 
@@ -32,11 +34,22 @@ peakAnalyzer <- function(input,output,session,selected.scale, data) {
     markers$markersList = available.analyzes
     selectInput(ns("markers"), label = "Markers",  choices = c("None",files), selected = 'None')
   })
+  
+  
+  output$removeStutters <- renderUI({
+    req(selected.scale$selectedScale() != 'Raw')
+    req(selected.scale$scalingDye() != 'None')
+    req(data()$standardized.data) 
+    checkboxInput(ns("removeStutters"), label = "Remove stutter peaks", value = T)
+  })
+  
+  
 
   return(
     list(
         selectedMarkers = reactive(input$markers),
-        markersList =  reactive(markers$markersList)
+        markersList =  reactive(markers$markersList),
+        removeStutters = reactive(input$removeStutters)
     )
   )
 

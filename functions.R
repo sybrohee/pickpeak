@@ -37,7 +37,7 @@ my.read.fsa <- function(files) {
 }
 
 
-peaks.to.markers <- function(fsa.data) {
+peaks.to.markers <- function(fsa.data, minpeakheights, removeStutters) {
     dyes <- fsa.data$data$dyes
     ids <- unique(fsa.data$standardized.data$intensities$id)
     all.peaks.dt <- data.table()
@@ -46,7 +46,11 @@ peaks.to.markers <- function(fsa.data) {
     
     for (dyei in dyes) {
         for (idi in ids) {
-            peaks.dt <- data.table(findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]], zero = "+",minpeakdist = 5, minpeakheight = 30))
+            min.peak.height = 30
+            if (!is.null(minpeakheights[[idi]])) {
+              min.peak.height = minpeakheights[idi] 
+            }
+            peaks.dt <- data.table(findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]], zero = "+",minpeakdist = 3, minpeakheight = min.peak.height))
 #             print(peaks.dt)
 #             stop()
             model.id <- fsa.data$standardized.data$models[[idi]]
@@ -65,14 +69,24 @@ peaks.to.markers <- function(fsa.data) {
             }
         }
     }
-#     print(all.peaks.dt)
+    all.peaks.dt <- all.peaks.dt[order(id, dye, maxpos.size)]
+    all.peaks.dt$diff <- c(diff(floor(all.peaks.dt$maxpos.size)), 0)
+    all.peaks.dt$diffvalues <- c(diff(all.peaks.dt$peak.height),0)
+    all.peaks.dt$diffvalues.div <- all.peaks.dt$diffvalues / all.peaks.dt$peak.height
+
+    
+    stutterslines <- which(all.peaks.dt$diffvalues.div < 0.1 & all.peaks.dt$diff == 4)
+    if (removeStutters && length(stutterslines) > 0) {
+      all.peaks.dt <- all.peaks.dt[-stutterslines,]
+    }
+    print(all.peaks.dt[id== "19GR001728" & maxpos.size >= 117 & maxpos.size <= 130])
     markers <- fsa.data$markers
     setkey(markers, "dye", "start.pos", "end.pos")
     all.peaks.overlaps <-  foverlaps(all.peaks.dt, markers , by.x=c("dye", "startpos.size", "endpos.size"))
     return(all.peaks.overlaps)
 }
 
-scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', standard.dye = 'LIZ') {
+scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', standard.dye = 'LIZ', minpeakheight) {
   results <- list()
   models <- list()
   peaks <- list()
@@ -84,10 +98,11 @@ scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', stand
   } else {
     ids <- unique(intensities$id)
     scales$LIZ500 <- c(35, 50, 75, 100, 139, 150, 160, 200, 250, 300, 340, 350, 400, 450, 490, 500)
+    scales$ILS500 <- c(60, 65, 80, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500)
     scalei <- scales[[ladder]]
     for (idi in ids) {
 
-        peaks.dt <- data.table(findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = 600, zero = "+"))
+        peaks.dt <- data.table(findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = minpeakheight, zero = "+"))
         names(peaks.dt) <- c("peak.height", "peak.maxpos", "peak.startpos", "peak.minpos")
 
         valid.peaks <- tail(peaks.dt, n = length(scalei))
