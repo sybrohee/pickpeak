@@ -87,13 +87,14 @@ shinyServer(function(input, output,session) {
           markers.bins <-  read.bin.file(bin.file)
           
     
-		  fsa.data$peaks <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.sample)
+		  peaks <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.sample)
 # 		  myfsa <- list(data = fsa.data$data, standardized.data  =  fsa.data$standardized.data, markers = fsa.data$markers, bins= markers.bins, peaks=fsa.data$peaks)
 # 		  save(file = "www/brol.rdata", list = c("myfsa"))      		  
-		  bin.offset <- bins.position(markers.bins, fsa.data$peaks, ladder.sample);
+		  bin.offset <- bins.position(markers.bins, peaks, ladder.sample);
 		  # AJOUT DES BINS VIRTUELS
 		  
 		  
+		  fsa.data$peaks <- peaks
 		  fsa.data$bins <- bin.offset
 
         } else {

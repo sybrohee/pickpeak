@@ -246,9 +246,12 @@ bins.position <- function(bins, peaks, ladder.sample) {
   offset.bins <- merge(ladder.peaks, bins, by = c('bin', 'system'), all.y = T)
   offset.bins <- offset.bins[order(system, size)]
   system.dye <- unique(offset.bins[!is.na(dye), c('system' ,'dye')])
+  print(system.dye)
   dyes <- unique(ladder.peaks$dye)
-  systems <- unique(ladder.peaks$system)
+  systems <- unique(system.dye$system)
   for (systemi in systems) {
+#     print(systemi)
+#     print(system.dye[system == systemi]$dye)
     offset.bins[system == systemi, dye := system.dye[system == systemi]$dye]
   }
   offset.bins[virtual == F, inferred.pos := maxpos.size]
@@ -278,8 +281,10 @@ bins.position <- function(bins, peaks, ladder.sample) {
     if (is.na(offset.bins$inferred.pos[i]) && offset.bins$virtual[i]) {
 #       print(i)
       systemi <- offset.bins$system[i]
-      lm.model <- lm(offset.bins[system == systemi]$size ~ offset.bins[system == systemi]$maxpos.size)
-      offset.bins$inferred.pos[i] <-  lm.model$coefficients[1] + offset.bins$size[i]*lm.model$coefficients[2]
+      if (sum(!is.na(offset.bins[system == systemi]$size)) > 2 && sum(!is.na(offset.bins[system == systemi]$inferred.pos)) > 2) {
+		lm.model <- lm(offset.bins[system == systemi]$size ~ offset.bins[system == systemi]$inferred.pos)
+		offset.bins$inferred.pos[i] <-  lm.model$coefficients[1] + offset.bins$size[i]*lm.model$coefficients[2]
+	  }
     }
   }
   
