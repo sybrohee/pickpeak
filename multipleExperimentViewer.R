@@ -71,7 +71,6 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
             
         }
         sp <- subplot(plots, nrows = length(ids), shareX = TRUE, titleY = TRUE)
-#         print(curves)
         curves.description$curves = curves
 #         sp <- layout(sp, annotations = layouts, title = "MUCOMUC")
         sp

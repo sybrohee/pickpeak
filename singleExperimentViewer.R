@@ -23,7 +23,7 @@ singleExperimentViewerUI <- function(id){
 }
 
 # module server function
-singleExperimentViewer <- function(input, output, session, fsa.data, colors, singleExperimentFilterDyes, singleExperimentFilterExp, singleExperimentYaxis, singleExperimentFilterSystem, singleExperimentSystemDyeSelector,minValueFilterThresholdField, minValueFilterThresholdButton, includeExcludeButton) {
+singleExperimentViewer <- function(input, output, session, fsa.data, colors, singleExperimentFilterDyes, singleExperimentFilterExp, singleExperimentYaxis, singleExperimentFilterSystem, singleExperimentSystemDyeSelector,minValueFilterThresholdField, minValueFilterThresholdButton, includeExcludeButton, ladder.sample) {
     ns <- session$ns
     proxyFO <- dataTableProxy("filteredOutPeaks")
     proxySE <- dataTableProxy("exportPeaksTable")
@@ -33,8 +33,16 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     selected.peak <- reactiveValues(peak = NULL, onclick = NULL)
     curves.description <- reactiveValues(curves = NULL)
     
+    
+    
     colorder <-  c("system", "size", "height", "cytoband"  , "pos", "dye"  , "color", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", "keep")
     colstohide <- c("color", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", "keep", "start.pos",  "end.pos")    
+    
+    if (!is.null(fsa.data$peaks$bins)) {
+      colorder <-  c("system", "bin", "size", "height", "cytoband"  , "pos", "dye"  , "color", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", 'offset', "keep")
+      colstohide <- c("color","binsize" ,"minborder", "maxborder", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", "keep", "start.pos",  "end.pos")    
+        
+    }
     
     observeEvent(includeExcludeButton(), {
       newval <- T
@@ -67,6 +75,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
       req(fsa.data$peaks)
       req(singleExperimentSystemDyeSelector())
       peaksToExportDT <- annotated.peaks$mypeaks[keep == T]
+      print(peaksToExportDT)
       peaksToExportDT$pos <- paste0("[",peaksToExportDT$start.pos,"-", peaksToExportDT$end.pos,"]")
       names(peaksToExportDT)[which(names(peaksToExportDT) == 'maxpos.size')] <- "size"
       names(peaksToExportDT)[which(names(peaksToExportDT) == 'peak.height')] <- "height"
@@ -79,6 +88,8 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
         peaksToExportDT <- peaksToExportDT[system %in% singleExperimentFilterSystem()]
       }
       setcolorder(peaksToExportDT, colorder)
+	  print(peaksToExportDT)
+	  print(singleExperimentFilterSystem())
       peaksToExportDT
     })
     
@@ -162,6 +173,15 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     })
     
     
+
+    
+    
+    
+    
+    
+    
+    
+    
     output$singleExperimentPlot <- renderPlotly({
 
         f <- list(
@@ -202,15 +222,36 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
             p <- add_trace(p, x = annotated.peaks$mypeaks[!is.na(system)& system == systemi & keep == T & id == idi & dye == dyei]$maxpos.size, name = paste0(sample(letters, 2), collapse = ""), y = annotated.peaks$mypeaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei]$peak.height, marker = list(size = 6, color = colors[[dyei]]$color,line = list(color = colors[[dyei]]$color, width = 1)), text = annotated.peaks$mypeaks[!is.na(system)& system == systemi  & keep == T&id == idi & dye == dyei][['system']], showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
             curves <- append(curves, paste("peaks", systemi,idi,dyei, sep = "%%"))
           }
+          if (!is.null(fsa.data$peaks$bins)) {
+            ladder.bins <- fsa.data$bins[system == systemi]
+            p <- add_trace(p, x = ladder.bins$inferred.pos, opacity = 0.01, y =  rep(singleExperimentYaxis()[2], nrow(ladder.bins)), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins$bin, showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
+          }
         
-          plots[[systemi]] <- p 
+          plots[[systemi]] <- p
+          plotnb <- length(plots)
+		  xref.name = "x"
+          yref.name = "y"		      
+          if (plotnb > 1) {
+			xref.name = paste0("x", plotnb)
+			yref.name = paste0("y", plotnb)          
+		  }
+          # selected peaks surrounding
           if (!is.null(selected.peak) &&  selected.peak$keep && selected.peak$system == systemi) {
             rect.col <- "blue"
             opacity = 0.3
-            plotnb <- length(plots)
-            shapelist <- append(shapelist, list(type = 'rect', fillcolor = rect.col, line = list( color = rect.col), opacity = opacity,x0 =  selected.peak$startpos.size, x1 = selected.peak$endpos.size, y0 = 0, y1 =  selected.peak$height+0.1*selected.peak$height, xref = paste0("x", plotnb), yref = paste0("y", plotnb)))
-          }          
+            
+            shapelist[[length(shapelist)+1]] <- list(type = 'rect', fillcolor = rect.col, line = list( color = rect.col), opacity = opacity,x0 =  selected.peak$startpos.size, x1 = selected.peak$endpos.size, y0 = 0, y1 =  selected.peak$height+0.1*selected.peak$height, xref = xref.name, yref = yref.name)
+          }
+          # display ladder
+		  if (!is.null(fsa.data$peaks$bins)) {
+		    ladder.bins <- fsa.data$bins[system == systemi]
+		    rect.col <- "grey"
+		    for (i in 1:nrow(ladder.bins)) {
+		      shapelist[[length(shapelist)+1]] <- list(type = 'rect', fillcolor = rect.col, line = list( color = rect.col), opacity = 0.2,x0 = ladder.bins$inferred.pos[i]-ladder.bins$minborder[i], x1 = ladder.bins$inferred.pos[i]+ladder.bins$maxborder[i], y0 = singleExperimentYaxis()[1], y1 =  singleExperimentYaxis()[2], xref = xref.name, yref = yref.name)
+		    }
+		  }
         }
+
         curves.description$curves = curves
         
         sp <- subplot(plots,nrows = ceiling(length(names(plots))/2))
@@ -225,6 +266,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
         req(!is.null(selected.peak$onclick))
         curve.nb <- selected.peak$onclick[['curveNumber']]
         curve.id <- curves.description$curves[curve.nb]
+        req(is.character(curve.id))
         if (is.character(curve.id) ) {
             curve.id.vec <- vector()
             curve.id.vec.list <- strsplit(curve.id, "%%")

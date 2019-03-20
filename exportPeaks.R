@@ -64,8 +64,7 @@ exportPeaks <- function(input,output,session, exportPeaksTable, colors, markers,
           result.table[Marker == systemi][[paste("Size", j)]] <- peaks$size[j]
           result.table[Marker == systemi][[paste("Height", j)]] <- peaks$height[j]
         }
-        print(peaks$size[j])
-        print(result.table)
+
       }
       
       

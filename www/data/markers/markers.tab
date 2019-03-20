@@ -1,4 +1,4 @@
-analysis	marker.file	runName
-aneuploidies	markers_qstr_elucigene.tab	Aneu
-paternity_v16	markers_PowerPlex_ESX_16_v1.0.tab	Pat
-paternity_v17	markers_PowerPlex_ESX_17_v1.0.tab	Pat
+analysis	marker.file	bin.file	runName
+aneuploidies	markers_qstr_elucigene.tab	NA	Aneu
+paternity_v16	markers_PowerPlex_ESX_16_v3.0.tab	PowerPlex_ESX_Bins_IDX_v3.0_16.txt	Pat
+paternity_v17	markers_PowerPlex_ESX_17_v3.0.tab	PowerPlex_ESX_Bins_IDX_v3.0_17.txt	Pat

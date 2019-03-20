@@ -51,7 +51,6 @@ linearRegressionViewer <- function(input, output, session, fsa.data) {
      
             peaks.id <- peaks[[idi]]
             lm.id <- models[[idi]]
-            print(lm.id)
             x.reg <- c(min(peaks.id$peak.maxpos),max(peaks.id$peak.maxpos))
             y.reg <- (lm.id$coefficients[2]*x.reg) + lm.id$coefficients[1]
             annots <- list( text = idi, font = f, xref = "paper", yref = "paper", yanchor = "bottom", xanchor = "center", align = "center",  x = 0.5,  y = 1,  showarrow = FALSE )

@@ -23,7 +23,10 @@ analysisParameters <- function(input,output,session, data) {
   ns <- session$ns
   
   parameters <- reactiveValues(minPeakHeight = list(), ladderSample = list())
-
+  
+  
+  default.min.peak <-  2000
+  
   output$sampleIdSelector <- renderUI({
     req(data()$data$intensities$id)
     ids <- unique(data()$data$intensities$id)
@@ -32,7 +35,7 @@ analysisParameters <- function(input,output,session, data) {
   
   output$minPeakHeight <- renderUI({
     req(data()$data$intensities$id)
-    default.val <- 30
+    default.val <- default.min.peak
     if (!is.null(parameters$minPeakHeight[[input$sampleIdSelector]])) {
       default.val <- parameters$minPeakHeight[[input$sampleIdSelector]]
     }    
@@ -50,12 +53,24 @@ analysisParameters <- function(input,output,session, data) {
   observeEvent(input$ladderSample,{
     parameters$ladderSample[[input$sampleIdSelector]] <- input$ladderSample
     parameters$minPeakHeight[[input$sampleIdSelector]] <- input$minPeakHeight
+    other.ids <- setdiff(unique(data()$data$intensities$id), input$sampleIdSelector)
+    if (input$ladderSample) {
+      # only one ladder per set of experiment
+      for (other.id in other.ids) {
+        parameters$ladderSample[[other.id]] <- F
+      }
+    }
   })
   
   observeEvent(input$minPeakHeight,{
     parameters$ladderSample[[input$sampleIdSelector]] <- input$ladderSample
     parameters$minPeakHeight[[input$sampleIdSelector]] <- input$minPeakHeight
-
+    other.ids <- setdiff(unique(data()$data$intensities$id), input$sampleIdSelector)
+    for (other.id in other.ids) {
+		if (is.null(parameters$minPeakHeight[[other.id]])) {
+		  parameters$minPeakHeight[[other.id]] <- default.min.peak
+		}
+     }
   })  
 
 
