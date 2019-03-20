@@ -10,8 +10,11 @@ library(XLConnect)
 exportPeaksUI <- function(id){
   ns <- NS(id)
   fluidRow(
+     column(10, HTML("<h4>Export</h4>")) ,
      column(10,uiOutput(ns("runName"))) ,
-     column(10,downloadButton(ns("ExportPeaks"), "Export peaks (xlsx)"))
+     column(10,downloadButton(ns("ExportPeaks"), "Export peaks (xlsx)")),
+     
+     HTML("<br>&nbsp;")
   )
 }
 
@@ -49,12 +52,15 @@ exportPeaks <- function(input,output,session, exportPeaksTable, colors, markers,
       for (i in 1:supcols) {
         newsize <- paste("Size", i)
         newheight <- paste("Height", i)
+        newbin <- paste("bin", i)
         result.table[[newsize]] <- NA
         result.table[[newheight]] <- NA
+        result.table[[newbin]] <- NA
         result.table[[newsize]] <- as.numeric(result.table[[newsize]])
         result.table[[newheight]] <- as.numeric(result.table[[newheight]])
+        result.table[[newbin]] <- as.character(result.table[[newheight]])
       }
-      
+      print(exportPeaksTable())
       for (i in 1:nrow(result.table)) {
         # get system 
         systemi <- result.table[i][['Marker']]
@@ -63,6 +69,7 @@ exportPeaks <- function(input,output,session, exportPeaksTable, colors, markers,
         for (j in 1:nrow(peaks)) {
           result.table[Marker == systemi][[paste("Size", j)]] <- peaks$size[j]
           result.table[Marker == systemi][[paste("Height", j)]] <- peaks$height[j]
+          result.table[Marker == systemi][[paste("bin", j)]] <- peaks$bin[j]
         }
 
       }

@@ -26,7 +26,7 @@ shinyUI(
             2, 
             column(10, sampleSelectorUI("mysampleselector")),
             conditionalPanel(
-                condition = "input.tabs1 == 'Multiple experiment viewer'",
+                condition = "input.tabs1 == 'Experiment viewer'",
                 column(1, fluidRow()),
                 column(11, 
                     fluidRow(
@@ -63,7 +63,7 @@ shinyUI(
                 )
             ),
             conditionalPanel(
-                condition = "input.tabs1 == 'Single experiment viewer'",
+                condition = "input.tabs1 == 'System viewer'",
                 column(1, fluidRow()),
                 column(11, 
                     fluidRow(
@@ -86,11 +86,11 @@ shinyUI(
                 type = "tabs",
                 id ="tabs1",
                 tabPanel(
-                    "Multiple experiment viewer",
+                    "Experiment viewer",
                     multipleExperimentViewerUI("myMultipleExperimentViewer")
                 ),
                 tabPanel(
-                    "Single experiment viewer",
+                    "System viewer",
                     singleExperimentViewerUI("mySingleExperimentViewer")
                 ),                
      

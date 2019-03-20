@@ -183,7 +183,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     
     
     output$singleExperimentPlot <- renderPlotly({
-
+		req(singleExperimentYaxis())
         f <- list(
             family = "sans serif",
             size = 10,
@@ -225,6 +225,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
           if (!is.null(fsa.data$peaks$bins)) {
             ladder.bins <- fsa.data$bins[system == systemi]
             p <- add_trace(p, x = ladder.bins$inferred.pos, opacity = 0.01, y =  rep(singleExperimentYaxis()[2], nrow(ladder.bins)), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins$bin, showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
+            curves <- append(curves, paste("hover", systemi,idi,dyei, sep = "%%"))
           }
         
           plots[[systemi]] <- p
