@@ -92,18 +92,20 @@ peaks.to.markers <- function(fsa.data, minpeakheights, removeStutters) {
 
 
 markedpeaks.to.real.bins <- function(bins,peaks, ladder.sample) {
+  error.systems <- vector()
+  
   for (s in unique(bins$system)) {
     if (nrow(bins[system == s & virtual == F]) != nrow(peaks[system == s & id == ladder.sample])) {
-      print(paste0("Could not bin system ", s, ". Check thresholds values"))
-      print(paste(nrow(bins[system == s & virtual == F]) ,nrow(peaks[system == s & id == ladder.sample])))
-      
+      error.message <- paste0("Could not bin system ", s)
+      print(error.message)
+      error.systems <- append(error.systems, s)
     } else {
       peaks[system == s& id == ladder.sample, bin := bins[system == s & virtual == F]$bin]
       peaks[system == s& id == ladder.sample, binsize := bins[system == s & virtual == F]$size]
       peaks[system == s& id == ladder.sample, minborder := bins[system == s & virtual == F]$minborder]
       peaks[system == s& id == ladder.sample, maxborder := bins[system == s & virtual == F]$maxborder]
       peaks$offset <-  peaks$binsize - peaks$maxpos.size
-      
+
     }
   }
 
@@ -117,9 +119,18 @@ markedpeaks.to.real.bins <- function(bins,peaks, ladder.sample) {
   setkey(ladder.peaks, "system", "bin.start.pos", "bin.end.pos")
   ladder.vs.samples <- foverlaps(samples.peaks, ladder.peaks, by.x = c("system", "startpos.size", "endpos.size"))
   ladder.vs.samples[,c('bin.start.pos', 'bin.end.pos') :=  NULL]
+  result.error <- NULL
+  if (length(error.systems) > 0) {
+    result.error <- paste0("Could not bin system ", paste(error.systems, collapse = ", "), ". This could be due to a wrong threshold value for the ladder sample(s)")
+  }
 
+  
+  result <- list(
+	binnedpeaks = rbindlist(list(ladder.vs.samples,peaks[id == ladder.sample] ), use.names=T),
+	error = result.error
+  )
 
-  return (rbindlist(list(ladder.vs.samples,peaks[id == ladder.sample] ),use.names=T))
+  return (result)
 }
 
 
@@ -250,8 +261,6 @@ bins.position <- function(bins, peaks, ladder.sample) {
   dyes <- unique(ladder.peaks$dye)
   systems <- unique(system.dye$system)
   for (systemi in systems) {
-#     print(systemi)
-#     print(system.dye[system == systemi]$dye)
     offset.bins[system == systemi, dye := system.dye[system == systemi]$dye]
   }
   offset.bins[virtual == F, inferred.pos := maxpos.size]
@@ -259,6 +268,7 @@ bins.position <- function(bins, peaks, ladder.sample) {
     if (offset.bins$virtual[i]) {
       if (offset.bins$system[i-1] != offset.bins$system[i]) next;
       if (i+1 > nrow(offset.bins)) next;
+      if (i == 1) next;
       if (offset.bins$system[i+1] != offset.bins$system[i]) next;
       previous.obssize <- offset.bins$inferred.pos[i-1]
       previous.size <- offset.bins$size[i-1]

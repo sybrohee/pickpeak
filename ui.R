@@ -17,10 +17,12 @@ source("linearRegressionViewer.R")
 
 library(shiny)
 library(plotly)
+library(shinyalert)
 
 shinyUI(
   fluidPage(
     tags$head(tags$style(HTML('#peakFilterPanel {border: 1px solid #D7D7D7; border-radius: 5px;}'))),  
+    useShinyalert(),
     fluidRow(
         column(
             2, 

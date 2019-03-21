@@ -1,5 +1,8 @@
 library(data.table)
 library(plotly)
+library(shinyalert)
+
+
 source("functions.R")
 source("exportPeaks.R")
 source("sampleSelector.R")
@@ -85,16 +88,21 @@ shinyServer(function(input, output,session) {
 
         if (file.exists(bin.file) && !is.null(ladder.sample)) {
           markers.bins <-  read.bin.file(bin.file)
-          
+		  myfsa <- list(data = fsa.data$data, standardized.data  =  fsa.data$standardized.data, markers = fsa.data$markers, bins= markers.bins, peaks=peaks)
+		  save(file = "www/brol.rdata", list = c("myfsa"))                
     
-		  peaks <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.sample)
-# 		  myfsa <- list(data = fsa.data$data, standardized.data  =  fsa.data$standardized.data, markers = fsa.data$markers, bins= markers.bins, peaks=fsa.data$peaks)
-# 		  save(file = "www/brol.rdata", list = c("myfsa"))      		  
-		  bin.offset <- bins.position(markers.bins, peaks, ladder.sample);
+		  peaks.bin <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.sample)
+		  if (length(peaks.bin$error) > 0) {
+		    print(peaks.bin$error)
+
+			shinyalert(text = peaks.bin$error)
+    	  }
+		  
+		  bin.offset <- bins.position(markers.bins, peaks.bin$binnedpeaks, ladder.sample);
 		  # AJOUT DES BINS VIRTUELS
 		  
 		  
-		  fsa.data$peaks <- peaks
+		  fsa.data$peaks <- peaks.bin$binnedpeaks
 		  fsa.data$bins <- bin.offset
 
         } else {
