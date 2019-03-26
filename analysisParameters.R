@@ -3,44 +3,113 @@ library(shiny)
 library(DT)
 
 # module UI function
-analysisParametersUI<- function(id){
+analysisParametersUI<- function(id) {
   ns <- NS(id)
-
-    column(12,
-        uiOutput(ns("sampleIdSelector")),
-    fluidRow(
-        column(10, 
-            uiOutput(ns("minPeakHeight")),
-            uiOutput(ns("ladderSample"))
-            )
-        )
-    )
-
+  uiOutput(ns("openModalBtn"))
+  
 }
+
+
+
+
 
 # module server function
 analysisParameters <- function(input,output,session, data) {
   ns <- session$ns
+  default.min.peak <- 2000
+  parameters <- reactiveValues(minPeakHeight = list(), ladderSample = list(), idi = NULL, sample.min.peak = list(), global.default.min.peak = default.min.peak)
+  temp.parameters <- list(minPeakHeight = list(), ladderSample = list())
+
   
-  parameters <- reactiveValues(minPeakHeight = list(), ladderSample = list())
   
   
-  default.min.peak <-  2000
+    
+  # open modal on button click
+  observeEvent(input$openModalBtn,
+               ignoreNULL = TRUE,   # Show modal on start up
+               showModal(myModal())
+  )
+  
+  
+  output$openModalBtn <- renderUI({
+    req(data()$data$intensities$id)
+    actionButton(ns("openModalBtn"), "Edit parameters")
+  })
+  
+  myModal <- function() {
+    
+    modalDialog(
+		footer = NULL,
+		fluidRow(
+			column(5, 
+				fluidRow(
+					column(12,
+						uiOutput(ns("sampleIdSelector"))
+					),
+					column(12, 
+						uiOutput(ns("minPeakHeight")),
+						uiOutput(ns("ladderSample"))
+					),
+					column(3, 
+						actionButton(ns("submitModalButton"), "Submit")
+					)
+				)
+			),
+			column(5, 
+				fluidRow(
+					uiOutput(ns("defaultMinPeak"))
+				)
+			)
+		)
+	)
+  }
+  
+  observe({
+    req(data()$data$intensities$id)
+	if (is.null(parameters$idi)) {
+	  ids <- unique(data()$data$intensities$id)
+	  parameters$idi <- ids[1]
+	}
+  })
   
   output$sampleIdSelector <- renderUI({
     req(data()$data$intensities$id)
     ids <- unique(data()$data$intensities$id)
+	
+    
     selectInput(ns("sampleIdSelector"), label = "Sample analysis parameters",  choices = ids, selected = ids[1])
   })
   
+  
   output$minPeakHeight <- renderUI({
     req(data()$data$intensities$id)
-    default.val <- default.min.peak
-    if (!is.null(parameters$minPeakHeight[[input$sampleIdSelector]])) {
-      default.val <- parameters$minPeakHeight[[input$sampleIdSelector]]
-    }    
-    numericInput(ns("minPeakHeight"), label = "min peak height",  value = default.val)
+	req(data()$data$dyes)
+
+	dyes <- data()$data$dyes
+	
+	idi <- input$sampleIdSelector
+	lapply(dyes, 
+		function(dye) { 
+			val <- default.min.peak
+			if (!is.null(parameters$minPeakHeight[[idi]][[dye]])) {
+				val <- parameters$minPeakHeight[[idi]][[dye]]
+				print(paste(idi, dye, val))
+			}
+
+			numericInput(ns(dye), label = dye,  value = val)
+		}
+	)
   })
+  
+  output$defaultMinPeak <- renderUI({
+    val <- parameters$global.default.min.peak
+    if (!is.null(parameters$sample.min.peak[[parameters$idi]])) {
+      val <- parameters$sample.min.peak[[parameters$idi]]
+    }
+	numericInput(ns("defaultMinPeak"), label = "Default min peak",  value = val)
+  })  
+
+  
   output$ladderSample <- renderUI({
     req(data()$data$intensities$id)
     default.val <- F
@@ -50,34 +119,66 @@ analysisParameters <- function(input,output,session, data) {
     checkboxInput(ns("ladderSample"), label = "ladder sample", value = default.val)
   })
   
-  observeEvent(input$ladderSample,{
-    parameters$ladderSample[[input$sampleIdSelector]] <- input$ladderSample
-    parameters$minPeakHeight[[input$sampleIdSelector]] <- input$minPeakHeight
-    other.ids <- setdiff(unique(data()$data$intensities$id), input$sampleIdSelector)
-    if (input$ladderSample) {
-      # only one ladder per set of experiment
-      for (other.id in other.ids) {
-        parameters$ladderSample[[other.id]] <- F
-      }
-    }
+  
+  observeEvent (input$sampleIdSelector, {
+	save.values()
   })
   
-  observeEvent(input$minPeakHeight,{
-    parameters$ladderSample[[input$sampleIdSelector]] <- input$ladderSample
-    parameters$minPeakHeight[[input$sampleIdSelector]] <- input$minPeakHeight
-    other.ids <- setdiff(unique(data()$data$intensities$id), input$sampleIdSelector)
-    for (other.id in other.ids) {
-		if (is.null(parameters$minPeakHeight[[other.id]])) {
-		  parameters$minPeakHeight[[other.id]] <- default.min.peak
-		}
-     }
+  observeEvent (input$defaultMinPeak, {
+    req(data()$data$dyes)
+    dyes <- data()$data$dyes
+    for (dye in dyes) {
+		print(dye);
+		updateNumericInput(session = session, inputId = dye, value = input$defaultMinPeak)
+	}
+	
   })  
-
+  
+  observeEvent(input$submitModalButton, {
+    save.values()
+	removeModal()
+  })
+  
+  save.values <- function() {
+    req(data()$data$intensities$id)
+	req(data()$data$dyes)
+	req(input$sampleIdSelector)
+	dyes <- data()$data$dyes
+	
+	lapply(dyes, 
+		function(dye) {
+			parameters$minPeakHeight[[parameters$idi]][[dye]] <- input[[dye]]
+		}
+	)
+	parameters$ladderSample[[parameters$idi]] <- input$ladderSample
+	parameters$sample.min.peak[[parameters$idi]] <- input$defaultMinPeak
+	parameters$idi <- input$sampleIdSelector    
+  }
+  
+  collectMinPeakHeights <- reactive({
+	result <- list()
+	req(data()$data$dyes)
+	req(data()$data$intensities$id)
+	for (dye in data()$data$dyes) {
+	  for (idi in unique(data()$data$intensities$id)) {
+	    val <- parameters$minPeakHeight[[idi]][[dye]]
+	    if (is.null(val)) {
+	      val <- parameters$sample.min.peak[[idi]]
+	    } 
+	    if (is.null(val)) {
+	      val <- parameters$global.default.min.peak
+	    } 
+	    result[[idi]][[dye]] <- val
+	  }
+	  
+	}
+	result
+    
+  })
 
   return(list(
-    minPeakHeight = reactive(parameters$minPeakHeight),
+    minPeakHeight = reactive(collectMinPeakHeights()),
     ladderSample = reactive(parameters$ladderSample)
-    
   ))
     
 

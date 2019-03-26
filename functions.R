@@ -7,21 +7,39 @@ my.read.fsa <- function(files) {
   abif.data <- data.table()
   dyes <- c()
   expdate <- c()
+  
+  allcols <- c("1", "2", "3", "4", "105")
+  dye.names <- c("DyeN.1", "DyeN.2","DyeN.3","DyeN.4","DyeN.5")
+
+  
   for (file in files) {
     abif <- read.abif(file)
 #     print(abif$DATA.5)
-    abif.data.i <- data.table(abif$Data$DATA.1, abif$Data$DATA.2, abif$Data$DATA.3, abif$Data$DATA.4,  abif$Data$DATA.105)
-    dyes.i <- c(abif$Data$DyeN.1, abif$Data$DyeN.2, abif$Data$DyeN.3, abif$Data$DyeN.4,  abif$Data$DyeN.5) 
-    
-    names(abif.data.i) <- dyes.i
-    dyes <- dyes.i
-    names(dyes) <- c("DyeN.1", "DyeN.2","DyeN.3","DyeN.4","DyeN.5")
-    abif.data.i$id <- abif$Data$SpNm.1
+	abif.data.i <- NULL
+	dyes.i <- vector()
+	for (c in 1:length(allcols)) {
+		if (! is.null(abif$Data[[paste0("DATA.",allcols[c])]]) ) {
+			if (is.null(abif.data.i)) {
+			  abif.data.i <- data.table( abif$Data[[paste0("DATA.",allcols[c])]])
+			} else {
+			  abif.data.i[[dye.names[c]]] <- abif$Data[[paste0("DATA.",allcols[c])]]
+			}
+			dyes.i[dye.names[c]] <- abif$Data[[paste0("DyeN.", c)]]
+		}
+    }
+	
+
+
+	
+	
+	names(abif.data.i) <- dyes.i[1:length(dyes.i)]
+	dyes <- dyes.i
+	
+    abif.data.i$id <- gsub('[^\x20-\x7E]', "", abif$Data$SpNm.1)
     abif.data.i$time <- 1:nrow(abif.data.i)
     day <- paste0("0", abif$Data$RUND.1$day)
     month <- paste0("0", abif$Data$RUND.1$month)
     year <- toString(abif$Data$RUND.1$year)
-    
     expdate[abif.data.i$id] <- paste0(substr(day, nchar(day)-1, nchar(day)),
                          substr(month, nchar(month)-1, nchar(month)),
                          substr(year, nchar(year)-1, nchar(year))
@@ -38,22 +56,17 @@ my.read.fsa <- function(files) {
 }
 
 
-peaks.to.markers <- function(fsa.data, minpeakheights, removeStutters) {
+peaks.to.markers <- function(fsa.data, minpeakheights,  removeStutters) {
     dyes <- fsa.data$data$dyes
     ids <- unique(fsa.data$standardized.data$intensities$id)
     all.peaks.dt <- data.table()
-#     dyes = '6-FAM'
-#     ids = 'QSTR-19GR001202-DE'
+
     
     for (dyei in dyes) {
         for (idi in ids) {
-            min.peak.height = 30
-            if (!is.null(minpeakheights[[idi]])) {
-              min.peak.height = minpeakheights[idi] 
-            }
+            min.peak.height = minpeakheights[[idi]][[dyei]]
             peaks.dt <- data.table(findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]], zero = "+",minpeakdist = 3, minpeakheight = min.peak.height))
-#             print(peaks.dt)
-#             stop()
+
             model.id <- fsa.data$standardized.data$models[[idi]]
             if (nrow(peaks.dt) > 0) {
                 names(peaks.dt) <- c("peak.height", "peak.maxpos.time", "peak.startpos.time", "peak.endpos.time")
@@ -134,7 +147,12 @@ markedpeaks.to.real.bins <- function(bins,peaks, ladder.sample) {
 }
 
 
-scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', standard.dye = 'LIZ', minpeakheight) {
+scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', standard.dye = 'LIZ', minpeakheights = NULL) {
+  # min.peak.height is a list of list
+  # list(sample1(dye1=minval,dye2=minval, ...),
+  #      sample2(dye1=minval,dye2=minval, ...)
+  # )
+  print(minpeakheights)
   results <- list()
   models <- list()
   peaks <- list()
@@ -148,15 +166,21 @@ scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', stand
     scales$LIZ500 <- c(35, 50, 75, 100, 139, 150, 160, 200, 250, 300, 340, 350, 400, 450, 490, 500)
     scales$ILS500 <- c(60, 65, 80, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500)
     scalei <- scales[[ladder]]
-    for (idi in ids) {
 
-        peaks.dt <- data.table(findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = minpeakheight, zero = "+"))
+
+    for (idi in ids) {
+        minval <- minpeakheights[[idi]][[standard.dye]]
+        print(minval)
+        peaks.dt <- data.table(findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = minval, zero = "+"))
+        print(peaks.dt)
+        
+        
+        
         names(peaks.dt) <- c("peak.height", "peak.maxpos", "peak.startpos", "peak.minpos")
 
         valid.peaks <- tail(peaks.dt, n = length(scalei))
         valid.peaks$sizes <- scalei
         lm.model <- lm(sizes~peak.maxpos, valid.peaks)
-    #     print(lm.model)
         intensities[id == idi, sizes := lm.model$coefficients[1] + time*lm.model$coefficients[2]]
         models[[idi]] <- lm.model
         peaks[[idi]] <- valid.peaks
@@ -264,26 +288,43 @@ bins.position <- function(bins, peaks, ladder.sample) {
     offset.bins[system == systemi, dye := system.dye[system == systemi]$dye]
   }
   offset.bins[virtual == F, inferred.pos := maxpos.size]
+  previous.observed.not.virtual <- NA;
   for (i in 1:nrow(offset.bins)) {
     if (offset.bins$virtual[i]) {
+
       if (offset.bins$system[i-1] != offset.bins$system[i]) next;
       if (i+1 > nrow(offset.bins)) next;
+      if (is.na(previous.observed.not.virtual)) next;
       if (i == 1) next;
       if (offset.bins$system[i+1] != offset.bins$system[i]) next;
-      previous.obssize <- offset.bins$inferred.pos[i-1]
-      previous.size <- offset.bins$size[i-1]
+      previous.obssize <- previous.observed.not.virtual
+      previous.size <- previous.size.not.virtual
       sizei <- offset.bins$size[i]
       next.obssize <- NA
       j <- 1
 #       print(offset.bins)
-      while (is.na(next.obssize) && j < 3) {
+      while (is.na(next.obssize) && (i+j) < nrow(offset.bins) &&  offset.bins$system[i+j] == offset.bins$system[i]) {
 		next.obssize <- offset.bins$inferred.pos[i+j]
 		next.size <- offset.bins$size[i+j]
 		j <- j+1
       }
       offset.bins$inferred.pos[i] <- previous.obssize  + ((sizei-previous.size)*(previous.size-next.size)/(previous.obssize-next.obssize))
-#       print(i)
+      if (offset.bins$system[i] == 'D3S1358') {
+        print("########");
+		print (paste("binname", offset.bins$bin[i]))
+		print(paste( "op", previous.obssize ))
+		print(paste( "s", sizei ))
+		print(paste( "tp", previous.size ))
+		print(paste( "tn", next.size ))
+		print(paste( "on", next.obssize ))        
+		print(paste("result", offset.bins$inferred.pos[i] ))
+      }
+
+    } else if (!offset.bins$virtual[i] && i > 1 && offset.bins$system[i-1] == offset.bins$system[i]) {
+	  previous.size.not.virtual <-  offset.bins$size[i]
+      previous.observed.not.virtual <-  offset.bins$inferred.pos[i]
     }
+    
 
   }
   

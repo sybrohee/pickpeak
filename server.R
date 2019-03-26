@@ -26,7 +26,10 @@ shinyServer(function(input, output,session) {
                 "VIC" =  list(color = '#31B404', cval = "green"),
                 "NED" = list(color = '#FFFF00', cval = "yellow"),
                 "PET" =  list(color = '#FF0000', cval = "red"),
-                "LIZ" =  list(color = '#FFBF00', cval = "orange"))
+                "LIZ" =  list(color = '#FFBF00', cval = "orange"),
+				"ROX"= list(color = "#FF0000", cval = "red"),
+				"HEX"= list(color = "#00FF00", cval = "green")
+				)
       fsa.data <- reactiveValues(data = NULL, standardized.data = NULL, bins = NULL, markers = NULL, peaks = NULL, binpeaks = NULL)
       selected.samples <- callModule(sampleSelector, "mysampleselector")
       selected.dyes <- callModule(dyeSelector, "mydyeselector", reactive(fsa.data$data))
@@ -46,13 +49,16 @@ shinyServer(function(input, output,session) {
       })
       observe({
         req(selected.scale$selectedScale())
+        req(length(parameters$minPeakHeight()) > 0)
         standard.dye <- selected.scale$scalingDye()
 
         if (is.null(standard.dye)) {
           standard.dye = "None"
         }
-        
-        fsa.data$standardized.data <- scale.timeseries(fsa.data$data, ladder = selected.scale$selectedScale(), standard.dye = standard.dye, minpeakheight = 600)
+        print(parameters$minPeakHeight())
+        fsa.data$standardized.data <- scale.timeseries(fsa.data$data, ladder = selected.scale$selectedScale(), standard.dye = standard.dye, minpeakheights = parameters$minPeakHeight())
+
+
         selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)      
 
       })
