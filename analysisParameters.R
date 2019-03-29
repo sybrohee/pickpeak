@@ -29,7 +29,16 @@ analysisParameters <- function(input,output,session, data) {
                ignoreNULL = TRUE,   # Show modal on start up
                showModal(myModal())
   )
-  
+  observeEvent(data()$data$intensities$id, {
+# 	if (! is.null(data()$data$intensities$id)) {
+		parameters$minPeakHeight <- list() 
+		parameters$ladderSample  <- list()
+		parameters$idi = NULL
+		parameters$sample.min.peak = list()
+		parameters$global.default.min.peak = default.min.peak
+		parameters$default.min.peak= NULL
+# 	}
+  })
   
   output$openModalBtn <- renderUI({
     req(data()$data$intensities$id)
@@ -41,7 +50,7 @@ analysisParameters <- function(input,output,session, data) {
     modalDialog(
 		footer = NULL,
 		fluidRow(
-			column(5, 
+			column(7, 
 				fluidRow(
 					column(12,
 						uiOutput(ns("sampleIdSelector"))
@@ -55,11 +64,14 @@ analysisParameters <- function(input,output,session, data) {
 					)
 				)
 			),
-			column(5, 
+			column(3, 
 				fluidRow(
-					uiOutput(ns("defaultMinPeak"))
+					uiOutput(ns("defaultMinPeak")),
+					uiOutput(ns("samplesorsample")),
+					actionButton(ns("cloneButton"), "Clone value")
 				)
-			)
+				
+			)	
 		)
 	)
   }
@@ -81,6 +93,10 @@ analysisParameters <- function(input,output,session, data) {
   })
   
   
+  output$samplesorsample <- renderUI({
+    selectInput(ns("samplesorsample"), label = "Standard",  choices = c('All samples', 'This sample'), selected = 'This sample')
+  })
+  
   output$minPeakHeight <- renderUI({
     req(data()$data$intensities$id)
 	req(data()$data$dyes)
@@ -90,10 +106,11 @@ analysisParameters <- function(input,output,session, data) {
 	idi <- input$sampleIdSelector
 	lapply(dyes, 
 		function(dye) { 
+			print(paste(idi, dye))
 			val <- default.min.peak
 			if (!is.null(parameters$minPeakHeight[[idi]][[dye]])) {
 				val <- parameters$minPeakHeight[[idi]][[dye]]
-				print(paste(idi, dye, val))
+# 				print(paste(idi, dye, val))
 			}
 
 			numericInput(ns(dye), label = dye,  value = val)
@@ -124,19 +141,32 @@ analysisParameters <- function(input,output,session, data) {
 	save.values()
   })
   
-  observeEvent (input$defaultMinPeak, {
-    req(data()$data$dyes)
-    dyes <- data()$data$dyes
-    for (dye in dyes) {
-		print(dye);
-		updateNumericInput(session = session, inputId = dye, value = input$defaultMinPeak)
-	}
-	
-  })  
+
   
   observeEvent(input$submitModalButton, {
     save.values()
 	removeModal()
+  })
+  
+  observeEvent(input$cloneButton, {
+	req(data()$data$dyes)
+	req(data()$data$intensities$id)
+	results <- list()
+	ids <-   unique(data()$data$intensities$id)
+	if (input$samplesorsample == 'This sample') {
+	  ids <- c(parameters$idi)
+	}
+	for (dye in data()$data$dyes) {
+	  updateNumericInput(session = session, inputId = dye, value = input$defaultMinPeak)
+	  for (idi in ids) {
+		print(paste("cloning",idi, dye, input$defaultMinPeak))
+	    parameters$minPeakHeight[[idi]][[dye]] <- input$defaultMinPeak
+	    parameters$sample.min.peak[[idi]] <- input$defaultMinPeak
+	  }
+	  
+	}
+    
+
   })
   
   save.values <- function() {
@@ -144,6 +174,7 @@ analysisParameters <- function(input,output,session, data) {
 	req(data()$data$dyes)
 	req(input$sampleIdSelector)
 	dyes <- data()$data$dyes
+
 	
 	lapply(dyes, 
 		function(dye) {
@@ -168,6 +199,7 @@ analysisParameters <- function(input,output,session, data) {
 	    if (is.null(val)) {
 	      val <- parameters$global.default.min.peak
 	    } 
+	    print(paste("collecting", idi, dye, val))
 	    result[[idi]][[dye]] <- val
 	  }
 	  

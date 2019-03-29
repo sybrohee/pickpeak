@@ -2,7 +2,7 @@ library(data.table)
 library(plotly)
 library(shinyalert)
 
-
+source("multipleViewerSampleSelector.R")
 source("functions.R")
 source("exportPeaks.R")
 source("sampleSelector.R")
@@ -32,33 +32,51 @@ shinyServer(function(input, output,session) {
 				)
       fsa.data <- reactiveValues(data = NULL, standardized.data = NULL, bins = NULL, markers = NULL, peaks = NULL, binpeaks = NULL)
       selected.samples <- callModule(sampleSelector, "mysampleselector")
+      parameters <- callModule(analysisParameters, "myAnalysisParameters", reactive(fsa.data)) 
+      selected.scale <- callModule(scaleSelector, "myscaleselector", reactive(fsa.data$data), parameters)
+      
       selected.dyes <- callModule(dyeSelector, "mydyeselector", reactive(fsa.data$data))
       rawDataPeaksFilter <- callModule(rawDataPeaksFilter, "rawdatapeaksfilter", reactive(fsa.data$data))
       singleExperimentFiltersAndLayouts <- callModule(singleExperimentFiltersAndLayouts,'mySingleExperimentFiltersAndLayouts',reactive(fsa.data))
-      selected.scale <- callModule(scaleSelector, "myscaleselector", reactive(fsa.data$data))
+      
       selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)      
       selected.analysis <- callModule(peakAnalyzer, "mypeakanalyzer", selected.scale, reactive(fsa.data))
       selected.height <- callModule(heightSelector, "myheightselector", reactive(fsa.data), selected.dyes)
       selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)
       callModule(rawDataViewer, "myrawdataviewer", reactive(fsa.data), rawDataPeaksFilter)
-      parameters <- callModule(analysisParameters, "myAnalysisParameters", reactive(fsa.data))
+      multipleViewerSamplesSelected <- callModule(multipleViewersampleSelector, "mymultipleViewersampleSelector", reactive(fsa.data))
+      
       observe({
+	    
         req(selected.samples$selectedSamples()$datapath)
+
         fsa.data$data <- my.read.fsa(selected.samples$selectedSamples()$datapath)
+		fsa.data$standardized.data <- NULL
+		fsa.data$bins <- NULL
+		fsa.data$markers <-  NULL
+		fsa.data$peaks <- NULL
+		fsa.data$binpeaks <- NULL
 
       })
+	  
       observe({
         req(selected.scale$selectedScale())
         req(length(parameters$minPeakHeight()) > 0)
         standard.dye <- selected.scale$scalingDye()
-
         if (is.null(standard.dye)) {
           standard.dye = "None"
         }
-        print(parameters$minPeakHeight())
-        fsa.data$standardized.data <- scale.timeseries(fsa.data$data, ladder = selected.scale$selectedScale(), standard.dye = standard.dye, minpeakheights = parameters$minPeakHeight())
 
-
+		fsa.data$standardized.data <- NULL
+		fsa.data$bins <- NULL
+		fsa.data$markers <-  NULL
+		fsa.data$peaks <- NULL
+		fsa.data$binpeaks <- NULL
+		std.data <- scale.timeseries(fsa.data$data, ladder = selected.scale$selectedScale(), standard.dye = standard.dye, minpeakheights = parameters$minPeakHeight())
+		if ( !is.null(std.data$error)) {
+			shinyalert(text = paste0(std.data$error, ". Could not determine the size of the segments"))
+		}
+		fsa.data$standardized.data <- std.data
         selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)      
 
       })
@@ -67,17 +85,35 @@ shinyServer(function(input, output,session) {
         req(selected.dyes$selectedDyes())
         req(selected.height$selectedHeight())
         req(selected.width$selectedWidth())
-        req(fsa.data$standardized.data$intensities)
-        callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data,colors, selected.height, selected.width,selected.scale, selected.dyes)
+        req(fsa.data$standardized.data)
+        callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data, colors, multipleViewerSamplesSelected, selected.height, selected.width, selected.scale, selected.dyes)
         
         
       })
       observe({
-        req(selected.samples$selectedSamples()$datapath)        
+        req(selected.samples$selectedSamples()$datapath)
         callModule(linearRegressionViewer, "myLinearRegressionViewer", fsa.data)
       })
+      
+      
+      observe({
+        req(selected.analysis$selectedMarkers())
+        if (selected.analysis$selectedMarkers() == 'None') {
+			fsa.data$bins <- NULL
+			fsa.data$markers <-  NULL
+			fsa.data$peaks <- NULL
+			fsa.data$binpeaks <- NULL 
+        }
+        
+	  })
+      
       observe({
         req(selected.analysis$selectedMarkers() != 'None')
+        req(selected.scale$scalingDye() != 'None')
+        req(selected.scale$selectedScale() != 'Raw')
+
+
+        
 
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
@@ -94,8 +130,8 @@ shinyServer(function(input, output,session) {
 
         if (file.exists(bin.file) && !is.null(ladder.sample)) {
           markers.bins <-  read.bin.file(bin.file)
-		  myfsa <- list(data = fsa.data$data, standardized.data  =  fsa.data$standardized.data, markers = fsa.data$markers, bins= markers.bins, peaks=peaks)
-		  save(file = "www/brol.rdata", list = c("myfsa"))                
+# 		  myfsa <- list(data = fsa.data$data, standardized.data  =  fsa.data$standardized.data, markers = fsa.data$markers, bins= markers.bins, peaks=peaks)
+# 		  save(file = "www/brol.rdata", list = c("myfsa"))                
     
 		  peaks.bin <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.sample)
 		  if (length(peaks.bin$error) > 0) {

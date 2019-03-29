@@ -17,7 +17,9 @@ widthSelector <- function(input,output,session, data, selected.scale) {
     req(selected.scale$selectedScale())
 
     x.scale <- "time"
-    if (selected.scale$selectedScale() == 'Raw') {
+
+    
+    if (selected.scale$selectedScale() == 'Raw' || selected.scale$scalingDye() == 'None') {
       x.scale = 'time'
     } else if (!is.null(data()$data$intensities[['sizes']])) {
       x.scale <- "sizes"

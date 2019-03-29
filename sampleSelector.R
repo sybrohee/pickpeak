@@ -14,5 +14,10 @@ sampleSelectorUI <- function(id){
 
 # module server function
 sampleSelector <- function(input,output,session) {
-  return(list(selectedSamples = reactive(input$fileList)))
+  return(
+	list(
+		selectedSamples = reactive(input$fileList)
+		
+		)
+	)
 }

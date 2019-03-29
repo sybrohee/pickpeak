@@ -46,16 +46,38 @@ singleExperimentFiltersAndLayouts <- function(input,output,session, data) {
     req(length(input$singleExperimentFilterDyes) > 0 || length(input$singleExperimentFilterSystem) > 0)
     minval <- 0
     maxval <- 0
+    selected.systems.vec <- NULL
+    selected.dyes.vec <- NULL
     if (length(input$singleExperimentFilterDyes) > 0 && input$singleExperimentSystemDyeSelector == 'dye') {
         selected.dyes.vec <- input$singleExperimentFilterDyes;
-        maxval <- max(data()$peaks[id == input$singleExperimentFilterExp & !is.na(system) & dye %in% selected.dyes.vec]$peak.height)
-        maxval <- 100*(ceiling(maxval/100))+100
+        selected.systems.vec <- unique(data()$markers[dye %in% selected.dyes.vec]$system)
     } else if (length(input$singleExperimentFilterSystem) > 0 && input$singleExperimentSystemDyeSelector == 'system') {
         selected.systems.vec <- input$singleExperimentFilterSystem;
-        maxval <- max(data()$peaks[id == input$singleExperimentFilterExp & !is.na(system) & system %in% selected.systems.vec]$peak.height)
-        maxval <- 100*(ceiling(maxval/100))+100
+        selected.dyes.vec <- unique(data()$markers[system %in% selected.systems.vec]$dye)
     }
-    sliderInput(ns("singleExperimentYaxis"), label = "Y-axis", -100, maxval, value = c(-10, maxval), 100, tick = F)
+    needed.cols <- c("sizes", selected.dyes.vec)
+
+    print(data()$data$intensities[id == input$singleExperimentFilterExp,..needed.cols])
+	all.intensities <- melt(data()$data$intensities[id == input$singleExperimentFilterExp, ..needed.cols], id.vars = c("sizes"),  measure.vars = selected.dyes.vec, variable.factor = F, variable.name = 'dye');
+	all.intensities$sizes2 <- all.intensities$sizes + 1
+
+	markers.pos <- data()$markers[system %in% selected.systems.vec]
+	print(markers.pos)
+	print(all.intensities)
+	setkey(markers.pos, dye,start.pos, end.pos)
+	all.intensities.overlap <- foverlaps(all.intensities,markers.pos, by.x =c('dye', 'sizes', 'sizes2'), nomatch = F)
+	print(summary(all.intensities.overlap))
+# 		save(file = "www/brol.rdata", list = c("all.intensities","markers.pos" ))
+# 
+# 	stop()
+
+    
+    
+    maxval <- max(all.intensities.overlap$value)
+    maxval <- 100*(ceiling(maxval/100))+100
+    minval <- min(all.intensities.overlap$value)
+    minval <- 100*(floor(minval/100))-100
+    sliderInput(ns("singleExperimentYaxis"), label = "Y-axis", minval, maxval, value = c(minval, maxval), 100, tick = F)
   })  
   return(
     list(

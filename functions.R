@@ -2,7 +2,7 @@ library(seqinr)
 library(pracma)
 library(data.table)
 
-my.read.fsa <- function(files) {
+my.read.fsa <- function(files, dyes.default = c(Dye1 = '6-FAM', Dye2 = 'HEX', Dye3 = 'NED', Dye4 = 'ROX')) {
   result <- list()
   abif.data <- data.table()
   dyes <- c()
@@ -10,11 +10,11 @@ my.read.fsa <- function(files) {
   
   allcols <- c("1", "2", "3", "4", "105")
   dye.names <- c("DyeN.1", "DyeN.2","DyeN.3","DyeN.4","DyeN.5")
+  
 
   
   for (file in files) {
     abif <- read.abif(file)
-#     print(abif$DATA.5)
 	abif.data.i <- NULL
 	dyes.i <- vector()
 	for (c in 1:length(allcols)) {
@@ -24,7 +24,12 @@ my.read.fsa <- function(files) {
 			} else {
 			  abif.data.i[[dye.names[c]]] <- abif$Data[[paste0("DATA.",allcols[c])]]
 			}
-			dyes.i[dye.names[c]] <- abif$Data[[paste0("DyeN.", c)]]
+			dye.i <- abif$Data[[paste0("DyeN.", c)]]
+			if (dye.i %in% names(dyes.default)) { 
+				dye.i <- dyes.default[dye.i]
+			}
+			dyes.i[dye.names[c]] <- dye.i
+			
 		}
     }
 	
@@ -65,7 +70,7 @@ peaks.to.markers <- function(fsa.data, minpeakheights,  removeStutters) {
     for (dyei in dyes) {
         for (idi in ids) {
             min.peak.height = minpeakheights[[idi]][[dyei]]
-            peaks.dt <- data.table(findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]], zero = "+",minpeakdist = 3, minpeakheight = min.peak.height))
+            peaks.dt <- data.table(findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]],  nups = 3, zero = "+",minpeakdist = 3, minpeakheight = min.peak.height))
 
             model.id <- fsa.data$standardized.data$models[[idi]]
             if (nrow(peaks.dt) > 0) {
@@ -158,6 +163,7 @@ scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', stand
   peaks <- list()
   scales <- list()
   intensities <- fsa.raw.data$intensities
+  error <- ""
   if (!(standard.dye %in% names(intensities)) || ladder == 'Raw') {
     intensities$sizes <- intensities$time
 
@@ -165,14 +171,20 @@ scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', stand
     ids <- unique(intensities$id)
     scales$LIZ500 <- c(35, 50, 75, 100, 139, 150, 160, 200, 250, 300, 340, 350, 400, 450, 490, 500)
     scales$ILS500 <- c(60, 65, 80, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500)
-    scalei <- scales[[ladder]]
+    scales$LIZ120 <- c(15, 20, 25, 35, 50, 62, 80, 110, 120)
 
+    scalei <- scales[[ladder]]
+	
 
     for (idi in ids) {
         minval <- minpeakheights[[idi]][[standard.dye]]
         print(minval)
         peaks.dt <- data.table(findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = minval, zero = "+"))
-        print(peaks.dt)
+        if (nrow(peaks.dt) < length(scalei)) {
+			error <- paste("Not enough peaks detected for sample", idi);
+			intensities$sizes <- intensities$time
+			break;
+        }
         
         
         
@@ -187,9 +199,17 @@ scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', stand
 
     }
   }
-  results$intensities <- intensities
-  results$models <- models
-  results$peaks <- peaks
+  if (error == "") {
+	results$intensities <- intensities
+	results$models <- models
+	results$peaks <- peaks
+	results$error <- NULL
+  } else {
+	results$intensities <- intensities
+	results$models <- NULL
+	results$peaks <- NULL
+	results$error <- error
+  }
   return (results)
 }
 

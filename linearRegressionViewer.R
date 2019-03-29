@@ -54,13 +54,14 @@ linearRegressionViewer <- function(input, output, session, fsa.data) {
             x.reg <- c(min(peaks.id$peak.maxpos),max(peaks.id$peak.maxpos))
             y.reg <- (lm.id$coefficients[2]*x.reg) + lm.id$coefficients[1]
             annots <- list( text = idi, font = f, xref = "paper", yref = "paper", yanchor = "bottom", xanchor = "center", align = "center",  x = 0.5,  y = 1,  showarrow = FALSE )
-            p <- plot_ly() %>% layout( yaxis = y, xaxis = x );
+            p <- plot_ly() %>% layout( height = 800, yaxis = y, xaxis = x );
             p <- add_trace(p, x= peaks.id$peak.maxpos, y = peaks.id$size,type = 'scatter', mode =  'lines+markers',showlegend = F)
             p <- add_trace(p, x = x.reg, y = y.reg, mode = 'lines', line = list(color =  "grey", dash = 'dot'),showlegend = F) %>%  layout(annotations = annots)
             
             plots[[idi]] <- p
         }
-        subplot(plots,titleX = TRUE, titleY = TRUE)
+        subplot(plots,titleX = TRUE, titleY = TRUE, nrows = ceiling(length(names(plots))/3))
+
       } else {
         plotly_empty();
       }

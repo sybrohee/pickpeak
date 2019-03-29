@@ -2,6 +2,7 @@ source("sampleSelector.R")
 source("peakAnalyzer.R")
 source("dyeSelector.R")
 source("scaleSelector.R")
+source("multipleViewerSampleSelector.R")
 source("multipleExperimentViewer.R")
 source("singleExperimentViewer.R")
 source("heightSelector.R")
@@ -47,15 +48,24 @@ shinyUI(
                     ),
                     HTML("<br>"),
                     fluidRow(
-                        column(5, dyeSelectorUI("mydyeselector")),
-                        column(5, 
-                            fluidRow(
-                                heightSelectorUI("myheightselector"),
-                                widthSelectorUI("mywidthselector")
-                            )
-                        
-                        )
-                    )
+						column(10, id = 'peakFilterPanel',
+							fluidRow(
+								column(4, dyeSelectorUI("mydyeselector")),
+								column(8, multipleViewersampleSelectorUI("mymultipleViewersampleSelector"))
+							),
+							fluidRow(
+								column(1, fluidRow(" ")),
+								column(9, 
+									fluidRow(
+										heightSelectorUI("myheightselector"),
+										widthSelectorUI("mywidthselector")
+									)
+								
+								),
+								column(1, fluidRow(" "))
+							)
+						)
+					)
 
                 )
 
