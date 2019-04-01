@@ -118,32 +118,29 @@ shinyServer(function(input, output,session) {
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
         bin.file <- file.path("www","data", "markers",selected.analysis$markersList()[marker.file == basename(selected.analysis$selectedMarkers())]$bin.file)
-        ladder.sample <- NULL
+        ladder.samples <- vector()
         ids <- names(parameters$ladderSample())
 		for (id in ids) {
 			if (parameters$ladderSample()[[id]]) {
-				ladder.sample <- id
+				ladder.samples <- append(ladder.samples, id)
 			}
 		}
         
 		peaks <- peaks.to.markers(fsa.data, parameters$minPeakHeight(),  selected.analysis$removeStutters())
 
-        if (file.exists(bin.file) && !is.null(ladder.sample)) {
+        if (file.exists(bin.file) && length(ladder.samples) > 0) {
           markers.bins <-  read.bin.file(bin.file)
 # 		  myfsa <- list(data = fsa.data$data, standardized.data  =  fsa.data$standardized.data, markers = fsa.data$markers, bins= markers.bins, peaks=peaks)
 # 		  save(file = "www/brol.rdata", list = c("myfsa"))                
     
-		  peaks.bin <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.sample)
+		  peaks.bin <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.samples)
 		  if (length(peaks.bin$error) > 0) {
 		    print(peaks.bin$error)
 
 			shinyalert(text = peaks.bin$error)
     	  }
-		  
-		  bin.offset <- bins.position(markers.bins, peaks.bin$binnedpeaks, ladder.sample);
-		  # AJOUT DES BINS VIRTUELS
-		  
-		  
+# 		  myfsa <- list(data = fsa.data$data, standardized.data  =  fsa.data$standardized.data, markers = fsa.data$markers, bins= markers.bins, peaks=peaks)
+		  bin.offset <- bins.position(markers.bins, peaks.bin$binnedpeaks, ladder.samples);
 		  fsa.data$peaks <- peaks.bin$binnedpeaks
 		  fsa.data$bins <- bin.offset
 

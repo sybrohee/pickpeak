@@ -67,11 +67,11 @@ singleExperimentFiltersAndLayouts <- function(input,output,session, data) {
 	setkey(markers.pos, dye,start.pos, end.pos)
 	all.intensities.overlap <- foverlaps(all.intensities,markers.pos, by.x =c('dye', 'sizes', 'sizes2'), nomatch = F)
 	print(summary(all.intensities.overlap))
-# 		save(file = "www/brol.rdata", list = c("all.intensities","markers.pos" ))
+# # 		save(file = "www/brol.rdata", list = c("all.intensities","markers.pos" ))
+# # 
+# # 	stop()
 # 
-# 	stop()
-
-    
+#     
     
     maxval <- max(all.intensities.overlap$value)
     maxval <- 100*(ceiling(maxval/100))+100

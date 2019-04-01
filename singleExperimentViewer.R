@@ -39,7 +39,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     colstohide <- c("color", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", "keep", "start.pos",  "end.pos")    
     
     if (!is.null(fsa.data$peaks$bins)) {
-      colorder <-  c("system", "bin", "size", "height", "cytoband"  , "pos", "dye"  , "color", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", 'offset', "keep")
+      colorder <-  c("system", "bin", "size", "height", "cytoband"  , "pos", "dye"  , "color", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", "keep")
       colstohide <- c("color","binsize" ,"minborder", "maxborder", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", "keep", "start.pos",  "end.pos")    
         
     }
