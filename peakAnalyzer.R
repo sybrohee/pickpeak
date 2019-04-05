@@ -7,32 +7,47 @@ peakAnalyzerUI <- function(id){
   ns <- NS(id)
   fluidRow(
     column(12, uiOutput(ns("markers"))),
-    column(12, uiOutput(ns("removeStutters")))
-    
+    column(12, uiOutput(ns("removeStutters"))),
+    br()
   )
 }
 
 # module server function
-peakAnalyzer <- function(input,output,session,selected.scale, data) {
+peakAnalyzer <- function(input,output,session,selected.scale, parameters, data, global.parameters, predefined.parameters) {
   ns <- session$ns
   
-  markers <- reactiveValues(markersList = NULL)
+  markers <- reactiveValues(markersList = NULL, selected.marker = "None")
+  
+  observeEvent(selected.scale$scalingDye(), {
+    req(predefined.parameters()$selection)
+    if (selected.scale$scalingDye() != "None") {
+
+	  print( markers$selected.marker)
+	  analysis.dir <- file.path(global.parameters$datadir, "markers");
+	  available.analyzes <- fread(file.path(analysis.dir,"markers.tab"))
+	  analyzes <- available.analyzes$analysis
+	  files <- file.path(analysis.dir, available.analyzes$marker.file)
+	  names(files) <- analyzes
+
+	  selected <- predefined.parameters()$parameters[id ==  predefined.parameters()$selection][['analysis_type']]
+	  markers$selected.marker <- selected
+      updateSelectInput(session, "markers", selected = files[selected])
+    }
+  })
   
   output$markers <- renderUI({
 
+    print( markers$selected.marker)
     req(selected.scale$selectedScale() != 'Raw')
     req(selected.scale$scalingDye() != 'None')
-    req(data()$standardized.data) 
-
-    
-    analysis.dir <- "www/data/markers"
+	print( markers$selected.marker)
+    analysis.dir <- file.path(global.parameters$datadir, "markers");
     available.analyzes <- fread(file.path(analysis.dir,"markers.tab"))
     analyzes <- available.analyzes$analysis
-    print(available.analyzes)
     files <- file.path(analysis.dir, available.analyzes$marker.file)
-    names(files) <- analyzes
+	names(files) <- analyzes
     markers$markersList = available.analyzes
-    selectInput(ns("markers"), label = "Markers",  choices = c("None",files), selected = 'None')
+    selectInput(ns("markers"), label = "Markers",  choices = c("None",files), selected = files[markers$selected.marker])
   })
   
   
@@ -43,6 +58,12 @@ peakAnalyzer <- function(input,output,session,selected.scale, data) {
     checkboxInput(ns("removeStutters"), label = "Remove stutter peaks", value = T)
   })
   
+
+  observeEvent(parameters$minPeakHeight(), {
+    if (is.null(predefined.parameters()$selection)) {
+		updateSelectInput(session, "markers", selected = 'None')
+	}
+  })  
   
 
   return(

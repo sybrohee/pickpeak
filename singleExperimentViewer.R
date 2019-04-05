@@ -75,7 +75,6 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
       req(fsa.data$peaks)
       req(singleExperimentSystemDyeSelector())
       peaksToExportDT <- annotated.peaks$mypeaks[keep == T]
-      print(peaksToExportDT)
       peaksToExportDT$pos <- paste0("[",peaksToExportDT$start.pos,"-", peaksToExportDT$end.pos,"]")
       names(peaksToExportDT)[which(names(peaksToExportDT) == 'maxpos.size')] <- "size"
       names(peaksToExportDT)[which(names(peaksToExportDT) == 'peak.height')] <- "height"
@@ -289,10 +288,9 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
 
     
     return(list(selected.peak = reactive(selected.peak$peak),
-                exportPeaksTable = reactive(peaksToExportDT())))
+                exportPeaksTable = reactive(peaksToExportDT()),
+                annotatedPeaks = reactive(annotated.peaks$mypeaks))
                 
-                
-                
-                
+                )
 
 }

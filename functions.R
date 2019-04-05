@@ -162,7 +162,7 @@ markedpeaks.to.real.bins <- function(bins,peaks, ladder.samples) {
 }
 
 
-scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', standard.dye = 'LIZ', minpeakheights = NULL) {
+scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500', standard.dye = 'LIZ', minpeakheights = NULL) {
   # min.peak.height is a list of list
   # list(sample1(dye1=minval,dye2=minval, ...),
   #      sample2(dye1=minval,dye2=minval, ...)
@@ -170,7 +170,7 @@ scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', stand
   results <- list()
   models <- list()
   peaks <- list()
-  scales <- list()
+
   intensities <- fsa.raw.data$intensities
   error <- ""
   if (!(standard.dye %in% names(intensities)) || ladder == 'Raw') {
@@ -178,12 +178,9 @@ scale.timeseries <- function(fsa.raw.data, time = time, ladder = 'LIZ500', stand
 
   } else {
     ids <- unique(intensities$id)
-    scales$LIZ500 <- c(35, 50, 75, 100, 139, 150, 160, 200, 250, 300, 340, 350, 400, 450, 490, 500)
-    scales$ILS500 <- c(60, 65, 80, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500)
-    scales$LIZ120 <- c(15, 20, 25, 35, 50, 62, 80, 110, 120)
+
 
     scalei <- scales[[ladder]]
-	
 
     for (idi in ids) {
         minval <- minpeakheights[[idi]][[standard.dye]]

@@ -14,13 +14,24 @@ analysisParametersUI<- function(id) {
 
 
 # module server function
-analysisParameters <- function(input,output,session, data) {
+analysisParameters <- function(input,output,session, data, predefined.parameters) {
   ns <- session$ns
   default.min.peak <- 2000
   parameters <- reactiveValues(minPeakHeight = list(), ladderSample = list(), idi = NULL, sample.min.peak = list(), global.default.min.peak = default.min.peak)
   temp.parameters <- list(minPeakHeight = list(), ladderSample = list())
 
-  
+  observeEvent(predefined.parameters()$selection, {
+	req(predefined.parameters)
+	req(data()$data$dyes)
+	dyes <- data()$data$dyes
+	for (i in 1:5) {
+	    dye <- dyes[i]
+		val <- predefined.parameters()$parameters[id == predefined.parameters()$selection][[paste0("Dye", i)]]
+		for (idi in unique(data()$data$intensities$id)) {
+			parameters$minPeakHeight[[idi]][[dye]] <- val
+		}
+	}
+  })
   
   
     
@@ -29,6 +40,7 @@ analysisParameters <- function(input,output,session, data) {
                ignoreNULL = TRUE,   # Show modal on start up
                showModal(myModal())
   )
+  
   observeEvent(data()$data$intensities$id, {
 # 	if (! is.null(data()$data$intensities$id)) {
 		parameters$minPeakHeight <- list() 
@@ -42,9 +54,9 @@ analysisParameters <- function(input,output,session, data) {
   
   output$openModalBtn <- renderUI({
     req(data()$data$intensities$id)
-    actionButton(ns("openModalBtn"), "Edit parameters")
+    actionButton(ns("openModalBtn"), "Sample settings")
   })
-  
+
   myModal <- function() {
     
     modalDialog(
@@ -100,10 +112,11 @@ analysisParameters <- function(input,output,session, data) {
   output$minPeakHeight <- renderUI({
     req(data()$data$intensities$id)
 	req(data()$data$dyes)
-
+	req(input$sampleIdSelector)	
 	dyes <- data()$data$dyes
 	
 	idi <- input$sampleIdSelector
+
 	lapply(dyes, 
 		function(dye) { 
 			print(paste(idi, dye))
@@ -129,6 +142,7 @@ analysisParameters <- function(input,output,session, data) {
   
   output$ladderSample <- renderUI({
     req(data()$data$intensities$id)
+	req(input$sampleIdSelector)
     default.val <- F
     if (!is.null(parameters$ladderSample[[input$sampleIdSelector]])) {
       default.val <- parameters$ladderSample[[input$sampleIdSelector]]
@@ -178,7 +192,9 @@ analysisParameters <- function(input,output,session, data) {
 	
 	lapply(dyes, 
 		function(dye) {
-			parameters$minPeakHeight[[parameters$idi]][[dye]] <- input[[dye]]
+			if (!is.null(input[[dye]])) {
+				parameters$minPeakHeight[[parameters$idi]][[dye]] <- input[[dye]]
+			}
 		}
 	)
 	parameters$ladderSample[[parameters$idi]] <- input$ladderSample
@@ -204,6 +220,7 @@ analysisParameters <- function(input,output,session, data) {
 	  }
 	  
 	}
+	print(result)
 	result
     
   })

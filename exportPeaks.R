@@ -60,7 +60,7 @@ exportPeaks <- function(input,output,session, exportPeaksTable, colors, markers,
         result.table[[newheight]] <- as.numeric(result.table[[newheight]])
         result.table[[newbin]] <- as.character(result.table[[newheight]])
       }
-      print(exportPeaksTable())
+#       print(exportPeaksTable())
       for (i in 1:nrow(result.table)) {
         # get system 
         systemi <- result.table[i][['Marker']]
