@@ -43,7 +43,7 @@ dataExporterFilter <- function(input,output,session, fsa.data, selected.scale, e
   output$exportFormat <- renderUI({
 	export.choices <- c("Coma-separated value" = "csv", "Tab-delimited" = "tab")
 	if (input$exportType == 'Peaks' || input$exportType == 'Systems') {
-		export.choices <- c(c("Excel" = "xls"),  export.choices)
+		export.choices <- c(c("Excel" = "xlsx"),  export.choices)
 	}
 	
 	selectInput(ns("exportFormat"), label = "File format",  choices = export.choices)
