@@ -119,7 +119,7 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 
 	lapply(dyes, 
 		function(dye) { 
-			print(paste(idi, dye))
+			#print(paste(idi, dye))
 			val <- default.min.peak
 			if (!is.null(parameters$minPeakHeight[[idi]][[dye]])) {
 				val <- parameters$minPeakHeight[[idi]][[dye]]
@@ -173,7 +173,7 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 	for (dye in data()$data$dyes) {
 	  updateNumericInput(session = session, inputId = dye, value = input$defaultMinPeak)
 	  for (idi in ids) {
-		print(paste("cloning",idi, dye, input$defaultMinPeak))
+		#print(paste("cloning",idi, dye, input$defaultMinPeak))
 	    parameters$minPeakHeight[[idi]][[dye]] <- input$defaultMinPeak
 	    parameters$sample.min.peak[[idi]] <- input$defaultMinPeak
 	  }
@@ -215,12 +215,12 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 	    if (is.null(val)) {
 	      val <- parameters$global.default.min.peak
 	    } 
-	    print(paste("collecting", idi, dye, val))
+	    #print(paste("collecting", idi, dye, val))
 	    result[[idi]][[dye]] <- val
 	  }
 	  
 	}
-	print(result)
+	#print(result)
 	result
     
   })

@@ -1,6 +1,7 @@
 source("loadSaveParams.R")
 source("sampleSelector.R")
 source("peakAnalyzer.R")
+source("selectedPeakDisplayer.R")
 source("dyeSelector.R")
 source("scaleSelector.R")
 source("multipleViewerSampleSelector.R")
@@ -103,8 +104,14 @@ shinyUI(
                     ),
                     HTML("<br>"),
                     fluidRow(
-                        column(10, id = 'peakFilterPanel', singleExperimentPeakAnalyzerUI('mySingleExperimentPeakAnalyzer'))
-                    )                   
+                        column(10, id = 'peakFilterPanel', 
+							singleExperimentPeakAnalyzerUI('mySingleExperimentPeakAnalyzer'),
+							selectedPeakDisplayerUI("myselectedpeakdisplayer")
+						)
+                    ) 
+                    
+
+                    
                 )
             )            
         ),

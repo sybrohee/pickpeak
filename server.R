@@ -5,6 +5,7 @@ library(rjson)
 
 source("multipleViewerSampleSelector.R")
 source("functions.R")
+source("selectedPeakDisplayer.R")
 source("loadSaveParams.R")
 source("sampleSelector.R")
 source("dyeSelector.R")
@@ -27,8 +28,9 @@ shinyServer(function(input, output,session) {
 	  global.parameters <- fromJSON(file = "../pp_localConfigShiny.json")
 	  colors <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "colors.json"))
 	  scales <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "scales.json"))
-      fsa.data <- reactiveValues(data = NULL, standardized.data = NULL, bins = NULL, markers = NULL, peaks = NULL, binpeaks = NULL)
+      fsa.data <- reactiveValues(data = NULL, standardized.data = NULL, bins = NULL, markers = NULL, peaks = NULL, annotatedpeaks = NULL, binpeaks = NULL)
       predefined.parameters <- reactiveValues(parameters = NULL, selection = NULL)
+
       selected.samples <- callModule(sampleSelector, "mysampleselector")
       lsParams <- callModule(loadSaveParams, "myloadSaveParams", reactive(fsa.data),global.parameters)
       
@@ -36,6 +38,17 @@ shinyServer(function(input, output,session) {
 			updateSelectInput(session, inputId = "analysistype", selected = "custom")
 		}
       )
+      
+      observeEvent(selected.samples$selectedSamples,  {
+		fsa.data$standardized.data <- NULL
+		fsa.data$bins <- NULL
+		fsa.data$markers <-  NULL
+		fsa.data$peaks <- NULL
+		fsa.data$binpeaks <- NULL
+		predefined.parameters$parameters <- NULL
+		predefined.parameters$selection  <- NULL
+		predefined.parameters$loadParamButton <- NULL		
+      })
       
       observeEvent(lsParams$loadParamButton(), {
 	    
@@ -47,7 +60,6 @@ shinyServer(function(input, output,session) {
       parameters <- callModule(analysisParameters, "myAnalysisParameters", reactive(fsa.data), reactive(predefined.parameters))
       selected.scale <- callModule(scaleSelector, "myscaleselector", reactive(fsa.data$data),scales, parameters, reactive(predefined.parameters))
       selected.analysis <- callModule(peakAnalyzer, "mypeakanalyzer", selected.scale,parameters, reactive(fsa.data), global.parameters, reactive(predefined.parameters))
-      annotatedpeaks <- reactiveValues(myannotatedpeaks = NULL)
       
       
       selected.dyes <- callModule(dyeSelector, "mydyeselector", reactive(fsa.data$data))
@@ -60,8 +72,8 @@ shinyServer(function(input, output,session) {
       multipleViewerSamplesSelected <- callModule(multipleViewersampleSelector, "mymultipleViewersampleSelector", reactive(fsa.data))
       
 	  dataExporterFilters <- callModule(dataExporterFilter, "mydataExportFilter",reactive(fsa.data), selected.scale)
-
-      
+# 	  selected.peaks <- reactiveValues(selected.peak = NULL, exportPeaksTable = NULL, annotatedPeaks = NULL)
+#       singlePeakAnalyzer <- reactiveValues(minValueFilterThresholdField = NULL, minValueFilterThresholdButton = NULL,includeExcludeButton = NULL)      
 
 
       observe({
@@ -74,6 +86,9 @@ shinyServer(function(input, output,session) {
 		fsa.data$markers <-  NULL
 		fsa.data$peaks <- NULL
 		fsa.data$binpeaks <- NULL
+		predefined.parameters$parameters <- NULL
+		predefined.parameters$selection  <- NULL
+		predefined.parameters$loadParamButton <- NULL
 		output$predefinedparametersTitle <- renderUI(
 			{
 				list(tags$b("Predefined parameters"), br(),br())
@@ -102,7 +117,11 @@ shinyServer(function(input, output,session) {
 		fsa.data$binpeaks <- NULL
 		std.data <- scale.timeseries(fsa.data$data, ladder = selected.scale$selectedScale(), scales = scales, standard.dye = standard.dye, minpeakheights = parameters$minPeakHeight())
 		if (!is.null(std.data$error)) {
-			shinyalert(text = paste0(std.data$error, ". Could not determine the size of the segments"))
+			shinyalert(text = paste0(std.data$error, ". Could not determine the size of the segments. Check parameters."))
+			predefined.parameters$parameters <- NULL
+			predefined.parameters$selection <- NULL
+			
+			
 		}
 		fsa.data$standardized.data <- std.data
         selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)      
@@ -139,6 +158,7 @@ shinyServer(function(input, output,session) {
         req(selected.analysis$selectedMarkers() != 'None')
         req(selected.scale$scalingDye() != 'None')
         req(selected.scale$selectedScale() != 'Raw')
+        req(is.null(fsa.data$standardized.data$error))
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
         bin.file <- file.path("www","data", "markers",selected.analysis$markersList()[marker.file == basename(selected.analysis$selectedMarkers())]$bin.file)
@@ -152,11 +172,11 @@ shinyServer(function(input, output,session) {
         
 		peaks <- peaks.to.markers(fsa.data, parameters$minPeakHeight(),  selected.analysis$removeStutters())
 
+
         if (file.exists(bin.file) && length(ladder.samples) > 0) {
           markers.bins <-  read.bin.file(bin.file)
 		  peaks.bin <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.samples)
 		  if (length(peaks.bin$error) > 0) {
-		    print(peaks.bin$error)
 			shinyalert(text = peaks.bin$error)
     	  }
 		  bin.offset <- bins.position(markers.bins, peaks.bin$binnedpeaks, ladder.samples);
@@ -167,16 +187,19 @@ shinyServer(function(input, output,session) {
 		  fsa.data$peaks <- peaks
 		  fsa.data$bins <- NULL
         }
-
-
-
-        selected.peaks <- callModule(singleExperimentViewer, "mySingleExperimentViewer", fsa.data, colors, singleExperimentFiltersAndLayouts$singleExperimentFilterDyes, singleExperimentFiltersAndLayouts$singleExperimentFilterExp, singleExperimentFiltersAndLayouts$singleExperimentYaxis,singleExperimentFiltersAndLayouts$singleExperimentFilterSystem, singleExperimentFiltersAndLayouts$singleExperimentSystemDyeSelector,singlePeakAnalyzer$minValueFilterThresholdField, singlePeakAnalyzer$minValueFilterThresholdButton, singlePeakAnalyzer$includeExcludeButton, reactive(ladder.sample))
-        singlePeakAnalyzer <- callModule(singleExperimentPeakAnalyzer, "mySingleExperimentPeakAnalyzer", reactive(selected.peaks$selected.peak()) )     
-        annotatedpeaks$myannotatedpeaks = selected.peaks$annotatedPeaks()
+		selected.peaks <- callModule(singleExperimentViewer, "mySingleExperimentViewer", fsa.data, colors, singleExperimentFiltersAndLayouts$singleExperimentFilterDyes, singleExperimentFiltersAndLayouts$singleExperimentFilterExp, singleExperimentFiltersAndLayouts$singleExperimentYaxis,singleExperimentFiltersAndLayouts$singleExperimentFilterSystem, singleExperimentFiltersAndLayouts$singleExperimentSystemDyeSelector,singlePeakAnalyzer$minValueFilterThresholdField, singlePeakAnalyzer$minValueFilterThresholdButton, singlePeakAnalyzer$includeExcludeButton, reactive(ladder.sample))
+		singlePeakAnalyzer <- callModule(singleExperimentPeakAnalyzer, "mySingleExperimentPeakAnalyzer")              
+		callModule(selectedPeakDisplayer, "myselectedpeakdisplayer", reactive(selected.peaks$selected.peak()))
+        callModule(dataExporter, "mydataexporter", dataExporterFilters, reactive(selected.peaks$annotatedPeaks()), reactive(fsa.data), colors, selected.analysis$selectedMarkers, selected.analysis$markersList, reactive(fsa.data$data$expdate))
       })
       
+      
+	  
+     
+	  
 
- callModule(dataExporter, "mydataexporter", dataExporterFilters, reactive(fsa.data), reactive(annotatedpeaks$myannotatedpeaks ),colors, selected.analysis$selectedMarkers, selected.analysis$markersList, reactive(fsa.data$data$expdate))
+	  
+	  
 	
    
 })

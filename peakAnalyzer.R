@@ -21,14 +21,11 @@ peakAnalyzer <- function(input,output,session,selected.scale, parameters, data, 
   observeEvent(selected.scale$scalingDye(), {
     req(predefined.parameters()$selection)
     if (selected.scale$scalingDye() != "None") {
-
-	  print( markers$selected.marker)
 	  analysis.dir <- file.path(global.parameters$datadir, "markers");
 	  available.analyzes <- fread(file.path(analysis.dir,"markers.tab"))
 	  analyzes <- available.analyzes$analysis
 	  files <- file.path(analysis.dir, available.analyzes$marker.file)
 	  names(files) <- analyzes
-
 	  selected <- predefined.parameters()$parameters[id ==  predefined.parameters()$selection][['analysis_type']]
 	  markers$selected.marker <- selected
       updateSelectInput(session, "markers", selected = files[selected])
@@ -36,11 +33,8 @@ peakAnalyzer <- function(input,output,session,selected.scale, parameters, data, 
   })
   
   output$markers <- renderUI({
-
-    print( markers$selected.marker)
     req(selected.scale$selectedScale() != 'Raw')
     req(selected.scale$scalingDye() != 'None')
-	print( markers$selected.marker)
     analysis.dir <- file.path(global.parameters$datadir, "markers");
     available.analyzes <- fread(file.path(analysis.dir,"markers.tab"))
     analyzes <- available.analyzes$analysis

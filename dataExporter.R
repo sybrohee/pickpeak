@@ -16,9 +16,11 @@ dataExporterUI <- function(id){
 
 
 # module server function
-dataExporter <- function(input, output, session, dataExporterFilters, fsa.data, annotated.peaks, colors, markers, markersList, seqdates) {
+dataExporter <- function(input, output, session,  dataExporterFilters, annotated.peaks, fsa.data,colors, markers, markersList, seqdates) {
     ns <- session$ns
     table <- reactiveValues(activeTable = NULL)
+    
+#     annotated.peaks <- reactive({fsa.data()$annotated.peaks})
     
 	runName <- reactive( {
 		sample.date <- seqdates()[1]
@@ -50,23 +52,25 @@ dataExporter <- function(input, output, session, dataExporterFilters, fsa.data, 
 		result
     })    
     peaksExport <- reactive({
+		print(dim(annotated.peaks()[keep == T & id %in% dataExporterFilters$selected.samples()]))
 		result <- annotated.peaks()[keep == T & id %in% dataExporterFilters$selected.samples()]
         result$endpos.size <- round(result$endpos.size, 0)
         result$startpos.size <- round(result$startpos.size, 0)
 		result$maxpos.size <- round(result$maxpos.size, 0)		
 		result
-    })    
+    })
     
+
     systemExport <- reactive({
-    
+		kept.annotated.peaks <- annotated.peaks()[keep == T]
 		result.table.list <- list()
-		ids <- unique(annotated.peaks()[keep == T]$id)
+		ids <- unique(kept.annotated.peaks[keep == T]$id)
 		ids <- intersect(ids,dataExporterFilters$selected.samples())
-		bins <- !(is.null(annotated.peaks()$bin))
+		bins <- !(is.null(kept.annotated.peaks$bin))
 		for (k in 1:length(ids)) {
 			
 			idi <- ids[k]
-			annotated.peaks.idi <- annotated.peaks()[id == idi]
+			annotated.peaks.idi <- kept.annotated.peaks[id == idi]
 			result.table <- unique(data.table(
 				"Sample Name" = idi,
 				"run name" =  runName(),
@@ -76,7 +80,7 @@ dataExporter <- function(input, output, session, dataExporterFilters, fsa.data, 
 			result.table <- result.table[!is.na(Marker)]
 			supcols <- max(table(annotated.peaks.idi[keep == T & !is.na(system)]$system))
 
-			print(result.table)
+			#print(result.table)
 			for (s in 1:supcols) {
 				newsize <- paste("Size", s)
 				newheight <- paste("Height", s)

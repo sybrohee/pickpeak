@@ -38,7 +38,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
         
         intensities <- fsa.data$standardized.data$intensities
         peaks <- fsa.data$peaks
-        print(peaks)
+        #print(peaks)
 
         
         x.scale <- "sizes"
@@ -55,7 +55,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
         plots <- list()
         layouts <- list()
         curves <- vector()
-        print(intensities)
+       # print(intensities)
         shapelist <- list()
         for (idi in ids) {
             intensities.id <- intensities[id == idi]

@@ -29,10 +29,11 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     proxySE <- dataTableProxy("exportPeaksTable")
     
     
-    annotated.peaks <- reactiveValues(mypeaks = {data.table(fsa.data$peaks, keep = T)})
+
     selected.peak <- reactiveValues(peak = NULL, onclick = NULL)
     curves.description <- reactiveValues(curves = NULL)
-    
+    annotated.peaks <- reactiveValues(peaks = data.table(fsa.data$peaks, keep = T))
+    print("initialisation des boutons rouges")
     
     
     colorder <-  c("system", "size", "height", "cytoband"  , "pos", "dye"  , "color", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", "keep")
@@ -45,19 +46,23 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     }
     
     observeEvent(includeExcludeButton(), {
+      req(selected.peak$peak)
       newval <- T
+      
+      
+      
       if (selected.peak$peak$keep) {
         newval <- F
       }
-      
-      annotated.peaks$mypeaks[id == singleExperimentFilterExp() & peak.height == selected.peak$peak$height & system == selected.peak$peak$system & maxpos.size == selected.peak$peak$size & dye == selected.peak$peak$dye][["keep"]] <- newval
-      selected.peak$peak <- NULL
+
+      annotated.peaks$peaks[id == singleExperimentFilterExp() & peak.height == selected.peak$peak$height & system == selected.peak$peak$system & maxpos.size == selected.peak$peak$size & dye == selected.peak$peak$dye][["keep"]] <- newval
+
     })
     
     observeEvent(minValueFilterThresholdButton(), {
       min.thr <- minValueFilterThresholdField()
       idi <- singleExperimentFilterExp()
-      annotated.peaks$mypeaks[id == idi & peak.height < min.thr]$keep  <- F
+      annotated.peaks$peaks[id == idi & peak.height < min.thr]$keep  <- F
     })
     observeEvent(input$filteredOutPeaks_rows_selected, {
       selected.peak$peak <- peaksToFilterOutDT()[input$filteredOutPeaks_rows_selected,]
@@ -74,7 +79,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     peaksToExportDT <- reactive({
       req(fsa.data$peaks)
       req(singleExperimentSystemDyeSelector())
-      peaksToExportDT <- annotated.peaks$mypeaks[keep == T]
+      peaksToExportDT <- annotated.peaks$peaks[keep == T]
       peaksToExportDT$pos <- paste0("[",peaksToExportDT$start.pos,"-", peaksToExportDT$end.pos,"]")
       names(peaksToExportDT)[which(names(peaksToExportDT) == 'maxpos.size')] <- "size"
       names(peaksToExportDT)[which(names(peaksToExportDT) == 'peak.height')] <- "height"
@@ -87,15 +92,16 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
         peaksToExportDT <- peaksToExportDT[system %in% singleExperimentFilterSystem()]
       }
       setcolorder(peaksToExportDT, colorder)
-	  print(peaksToExportDT)
-	  print(singleExperimentFilterSystem())
+
       peaksToExportDT
     })
     
     peaksToFilterOutDT <- reactive({
+#       print(annotated.peaks$peaks[keep == F])
       req(fsa.data$peaks)
       req(singleExperimentSystemDyeSelector())
-      peaksToFilterOutDT <- annotated.peaks$mypeaks[keep == F]
+
+      peaksToFilterOutDT <- annotated.peaks$peaks[keep == F]
       peaksToFilterOutDT$pos <- paste0("[",peaksToFilterOutDT$start.pos,"-", peaksToFilterOutDT$end.pos,"]")
       names(peaksToFilterOutDT)[which(names(peaksToFilterOutDT) == 'maxpos.size')] <- "size"
       names(peaksToFilterOutDT)[which(names(peaksToFilterOutDT) == 'peak.height')] <- "height"
@@ -123,7 +129,9 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     })
     
     output$filteredOutPeaks <- DT::renderDataTable({
+
       req(nrow(peaksToFilterOutDT()) > 0)
+
       datatable(
         peaksToFilterOutDT(),
         extension = 'Scroller',
@@ -182,32 +190,41 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     
     
     output$singleExperimentPlot <- renderPlotly({
+
 		req(singleExperimentYaxis())
+
+		
+		req(singleExperimentFilterExp())
+
+		req(length(singleExperimentFilterDyes()) > 0 || length(singleExperimentFilterSystem()) > 0)
+
         f <- list(
             family = "sans serif",
             size = 10,
             color = "#000000"
         )
-        req(length(singleExperimentFilterDyes()) > 0 || length(singleExperimentFilterSystem()) > 0)
+        
         selected.peak <- selected.peak$peak
 
         idi <- singleExperimentFilterExp()
-        dyes <- unique(annotated.peaks$mypeaks$dye) 
-        systems <- sort(unique(annotated.peaks$mypeaks$system))
+        dyes <- unique(fsa.data$markers$dye) 
+        systems <- sort(unique(fsa.data$markers$system))
+        
         if (singleExperimentSystemDyeSelector() == "dye") {
           dyes <- intersect(singleExperimentFilterDyes(), dyes)
         } else if (singleExperimentSystemDyeSelector() == "system") {
           systems <- intersect(systems, singleExperimentFilterSystem())
-        
         }
 
         intensities <- fsa.data$standardized.data$intensities
         plots <- list()
         shapelist <- list()
-        
+
         curves <- vector()
         for (systemi in systems) {
-          dyei <- unique(annotated.peaks$mypeaks[system == systemi]$dye)
+
+          dyei <- unique(fsa.data$markers[system == systemi]$dye)
+          
           if (! dyei %in% dyes) next;
           startpos <-  fsa.data$markers[system == systemi]$start.pos
           endpos <- fsa.data$markers[system == systemi]$end.pos
@@ -217,8 +234,8 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
           p <- plot_ly( ) %>% layout(annotations = annots, yaxis = list(range = singleExperimentYaxis()));
           p <- add_trace(p, x = intensities.id[['sizes']], y= intensities.id[,get(dyei)],  type = 'scatter', mode = 'lines', line = list(color =  colors[[dyei]]$color), showlegend = F, hoverinfo = 'x+y')
           curves <- append(curves, paste("points",systemi, idi,dyei, sep = "%%"))
-          if (length( annotated.peaks$mypeaks[!is.na(system) & system == systemi &id == idi & keep == T &  dye == dyei][['maxpos.size']]) > 0) { 
-            p <- add_trace(p, x = annotated.peaks$mypeaks[!is.na(system)& system == systemi & keep == T & id == idi & dye == dyei]$maxpos.size, name = paste0(sample(letters, 2), collapse = ""), y = annotated.peaks$mypeaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei]$peak.height, marker = list(size = 6, color = colors[[dyei]]$color,line = list(color = colors[[dyei]]$color, width = 1)), text = annotated.peaks$mypeaks[!is.na(system)& system == systemi  & keep == T&id == idi & dye == dyei][['system']], showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
+          if (length( annotated.peaks$peaks[!is.na(system) & system == systemi &id == idi & keep == T &  dye == dyei][['maxpos.size']]) > 0) { 
+            p <- add_trace(p, x = annotated.peaks$peaks[!is.na(system)& system == systemi & keep == T & id == idi & dye == dyei]$maxpos.size, name = paste0(sample(letters, 2), collapse = ""), y = annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei]$peak.height, marker = list(size = 6, color = colors[[dyei]]$color,line = list(color = colors[[dyei]]$color, width = 1)), text = annotated.peaks$peaks[!is.na(system)& system == systemi  & keep == T&id == idi & dye == dyei][['system']], showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
             curves <- append(curves, paste("peaks", systemi,idi,dyei, sep = "%%"))
           }
           if (!is.null(fsa.data$peaks$bins)) {
@@ -277,7 +294,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
             systemi <- curve.id.vec[2]
             idi <- curve.id.vec[3]
             dyei <- curve.id.vec[4]
-            peak <-  annotated.peaks$mypeaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei  & peak.height == selected.peak$onclick$y]
+            peak <-  annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei  & peak.height == selected.peak$onclick$y]
             if (nrow(peak) > 0 && length(curve.id.vec) > 0) {
                 selected.peak$peak <- peaksToExportDT()[system == systemi &  floor(peaksToExportDT()$size) == floor(selected.peak$onclick$x) & height == selected.peak$onclick$y ]
             }
@@ -289,7 +306,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     
     return(list(selected.peak = reactive(selected.peak$peak),
                 exportPeaksTable = reactive(peaksToExportDT()),
-                annotatedPeaks = reactive(annotated.peaks$mypeaks))
+                annotatedPeaks = reactive(annotated.peaks$peaks))
                 
                 )
 

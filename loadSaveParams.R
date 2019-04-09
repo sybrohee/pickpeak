@@ -150,8 +150,8 @@ loadSaveParams <- function(input,output,session, data, global.parameters) {
 				label.id <- paramName
 				if (grepl("Dye", paramName)) {
 				  dyeVal <- as.numeric(gsub( "Dye", "",paramName))
-				  print(data()$data$dyes)
-				  print(dyeVal)
+				  #print(data()$data$dyes)
+				  #print(dyeVal)
 				  if (!is.na(data()$data$dyes[dyeVal])) {
 					label.id <- paste0(label.id, " (",data()$data$dyes[dyeVal],")")
 				  }
