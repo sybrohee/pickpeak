@@ -76,6 +76,7 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 					)
 				)
 			),
+			column(1, br()),
 			column(3, 
 				fluidRow(
 					uiOutput(ns("defaultMinPeak")),
@@ -125,8 +126,16 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 				val <- parameters$minPeakHeight[[idi]][[dye]]
 # 				print(paste(idi, dye, val))
 			}
-
-			numericInput(ns(dye), label = dye,  value = val)
+			list(
+				fluidRow(
+					column(3, tags$b(dye)), 
+					column(6, tags$div(id = "inline", numericInput(ns(dye), label = "",  value = val))), 
+					column(3, actionButton(ns(paste0("clone",dye)), "All samples"))
+					
+				),
+				fluidRow(br())
+			)
+			
 		}
 	)
   })
@@ -183,6 +192,29 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 
   })
   
+  observe({
+	req(data()$data$dyes)
+	req(data()$data$intensities$id)
+	lapply(
+		data()$data$dyes,
+		function(dye) {
+			observeEvent(input[[paste0(paste0("clone",dye))]], {
+				req(data()$data$dyes)
+				req(data()$data$intensities$id)
+				results <- list()
+				ids <-   unique(data()$data$intensities$id)
+				for (dye in data()$data$dyes) {
+					for (idi in ids) {
+						parameters$minPeakHeight[[idi]][[dye]] <- input[[dye]]
+						parameters$sample.min.peak[[idi]] <- input$defaultMinPeak
+					}
+				}
+			})
+		}
+	)
+  })
+
+
   save.values <- function() {
     req(data()$data$intensities$id)
 	req(data()$data$dyes)

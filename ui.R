@@ -27,6 +27,10 @@ library(shinyalert)
 shinyUI(
   fluidPage(
     tags$head(tags$style(HTML('#peakFilterPanel {border: 1px solid #D7D7D7; border-radius: 5px;}'))),  
+    tags$head(
+      tags$style(type="text/css", "#inline label{ display: table-cell; text-align: center; vertical-align: middle; } 
+                #inline .form-group { display: table-row;}")
+    ),
     useShinyalert(),
 
     fluidRow(
