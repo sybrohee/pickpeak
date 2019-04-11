@@ -30,9 +30,11 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     
     
 
-    selected.peak <- reactiveValues(peak = NULL, onclick = NULL)
+    selected.peak <- reactiveValues(peak = NULL, onclick = NULL, selected.range = NULL)
     curves.description <- reactiveValues(curves = NULL)
+    plot.description <- reactiveValues(description = NULL)
     annotated.peaks <- reactiveValues(peaks = data.table(fsa.data$peaks, keep = T))
+    addpeaks <- reactiveValues(system = NULL, from = NULL, to = NULL)
     print("initialisation des boutons rouges")
     
     
@@ -218,11 +220,11 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
 
         intensities <- fsa.data$standardized.data$intensities
         plots <- list()
-        shapelist <- list()
+        
 
         curves <- vector()
         for (systemi in systems) {
-
+		  shapelist <- list()
           dyei <- unique(fsa.data$markers[system == systemi]$dye)
           
           if (! dyei %in% dyes) next;
@@ -231,7 +233,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
           intensities.id <- intensities[id == idi  & intensities$sizes >= startpos & intensities$sizes <= endpos]
           if (nrow(intensities.id) == 0) next;
           annots <- list( text = paste(dyei, systemi), font = f, xref = 'paper', yref ='paper', yanchor = "bottom", xanchor = "center", align = "center",  x = 0.5,  y = 1,  showarrow = FALSE )
-          p <- plot_ly( ) %>% layout(annotations = annots, yaxis = list(range = singleExperimentYaxis()));
+          p <- plot_ly(source = "B" ) %>% layout(annotations = annots, yaxis = list(range = singleExperimentYaxis()));
           p <- add_trace(p, x = intensities.id[['sizes']], y= intensities.id[,get(dyei)],  type = 'scatter', mode = 'lines', line = list(color =  colors[[dyei]]$color), showlegend = F, hoverinfo = 'x+y')
           curves <- append(curves, paste("points",systemi, idi,dyei, sep = "%%"))
           if (length( annotated.peaks$peaks[!is.na(system) & system == systemi &id == idi & keep == T &  dye == dyei][['maxpos.size']]) > 0) { 
@@ -247,11 +249,14 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
           plots[[systemi]] <- p
           plotnb <- length(plots)
 		  xref.name = "x"
-          yref.name = "y"		      
+          yref.name = "y"
           if (plotnb > 1) {
 			xref.name = paste0("x", plotnb)
 			yref.name = paste0("y", plotnb)          
 		  }
+		  plot.description$description[[xref.name]] <- systemi
+		  plot.description$description[[yref.name]] <- systemi
+		  
           # selected peaks surrounding
           if (!is.null(selected.peak) &&  selected.peak$keep && selected.peak$system == systemi) {
             rect.col <- "blue"
@@ -267,18 +272,19 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
 		      shapelist[[length(shapelist)+1]] <- list(type = 'rect', fillcolor = rect.col, line = list( color = rect.col), opacity = 0.2,x0 = ladder.bins$inferred.pos[i]-ladder.bins$minborder[i], x1 = ladder.bins$inferred.pos[i]+ladder.bins$maxborder[i], y0 = singleExperimentYaxis()[1], y1 =  singleExperimentYaxis()[2], xref = xref.name, yref = yref.name)
 		    }
 		  }
+		  plots[[systemi]] <- p %>% layout(shapes = shapelist)
         }
 
         curves.description$curves = curves
         
         sp <- subplot(plots,nrows = ceiling(length(names(plots))/2))
-        sp %>% layout(shapes = shapelist)
+        sp 
         
     })
     
     
     observe({
-        selected.peak$onclick <- event_data("plotly_click")
+        selected.peak$onclick <- event_data("plotly_click", source = "B")
         
         req(!is.null(selected.peak$onclick))
         curve.nb <- selected.peak$onclick[['curveNumber']]
@@ -297,17 +303,184 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
             peak <-  annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei  & peak.height == selected.peak$onclick$y]
             if (nrow(peak) > 0 && length(curve.id.vec) > 0) {
                 selected.peak$peak <- peaksToExportDT()[system == systemi &  floor(peaksToExportDT()$size) == floor(selected.peak$onclick$x) & height == selected.peak$onclick$y ]
+                selectRows(proxySE, NULL)
+                selectRows(proxyFO, NULL)
+                
             }
         }
 
 
     })
 
+    observe({
+        selected.peak$selected.range <- event_data("plotly_brushed", source = "B")
+		req(!is.null(selected.peak$selected.range))
+		print(selected.peak$selected.range)
+		print(plot.description$description)
+		systemi <- plot.description$description[[names(selected.peak$selected.range)[1]]]
+		range.values <- unlist(selected.peak$selected.range)
+		xrange.values <- range.values[grepl("^x", names(range.values))]
+		xrange <- range(xrange.values)
+		print(paste("Adding a peak for ", systemi, "from", paste(xrange, collapse = " to ")))
+		addpeaks$system <- systemi
+		addpeaks$from <- xrange[1]
+		addpeaks$to <- xrange[2]
+		showModal(myAddPeakModal())
+    })
     
+	myAddPeakModal <- function() {
+    
+		modalDialog(
+			footer = NULL,
+			fluidRow(
+				column(1, ""),
+				column(11,
+					fluidRow(
+						fluidRow(
+							column(3, tags$b("system")), 
+							column(8, uiOutput(ns("system")))
+						),
+						br(),
+						
+						fluidRow(
+							column(3, tags$b("From")), 
+							column(3, uiOutput(ns("startsize")))
+						),
+						br(),
+						fluidRow(
+							column(3, tags$b("To")), 
+							column(3, uiOutput(ns("endsize")))
+						),
+						br(),
+						fluidRow(
+							column(3, tags$b("Size at max height")), 
+							column(6, uiOutput(ns("maxsize")))
+						),
+						br(),
+						fluidRow(
+							column(3, tags$b("Max Height")), 
+							column(6, uiOutput(ns("height")))
+						)
+						
+						
+					)
+				)
+			),
+			fluidRow(
+				column(2, ""),					
+				column(2, uiOutput(ns("saveButton"))),
+				column(2, uiOutput(ns("closeModalButton")))#,
+			)
+		)
+	}
+    
+    output$system <- renderUI({
+		req(fsa.data$markers$system)
+        systems <- sort(unique(fsa.data$markers$system))
+        systemi <- systems[1]
+        if (!is.null(addpeaks$system)) {
+          systemi <- addpeaks$system
+        }
+        tags$div(id = "inline", selectInput(ns("system"), label = "",  choices = systems, selected = systemi))
+    })
+    output$startsize <- renderUI({
+		req(fsa.data$markers$system)
+        val <- floor(addpeaks$from)
+        minval <- NULL
+        maxval <- NULL
+        if (!is.null(input$system)) {
+			minval <- floor(fsa.data$markers[system == input$system]$start.pos)
+			maxval <- ceiling(fsa.data$markers[system == input$system]$end.pos)
+        }
+        
+		tags$div(id = "inline", numericInput(ns("startsize"), label = "", value = val, min = minval, max = maxval))
+    })    
+    output$endsize <- renderUI({
+		req(fsa.data$markers$system)
+        val <- floor(addpeaks$to)
+        minval <- NULL
+        maxval <- NULL
+        if (!is.null(input$system)) {
+			minval <- floor(fsa.data$markers[system == input$system]$start.pos)
+			maxval <- ceiling(fsa.data$markers[system == input$system]$end.pos)
+        }
+        
+		tags$div(id = "inline", numericInput(ns("endsize"), label = "", value = val, min = minval, max = maxval))
+    })       
+	addedPeak.maxSize <- reactive({
+		req(input$system)
+		req(input$startsize)
+		req(singleExperimentFilterExp())
+		req(input$endsize)
+		req(addedPeak.maxHeight())
+		dye <- fsa.data$markers[system == input$system]$dye
+		intensities <-fsa.data$standardized.data$intensities[id == singleExperimentFilterExp()  & sizes >= input$startsize & sizes <= input$endsize]
+		intensities <- intensities[order(get(dye))]
+# 		print(intensities)
+		tail(intensities, n = 1)$sizes
+
+	})
+	addedPeak.maxHeight <- reactive({
+		req(input$system)
+		req(input$startsize)
+		req(singleExperimentFilterExp())
+		req(input$endsize)
+		dye <- fsa.data$markers[system == input$system]$dye
+		intensities <-fsa.data$standardized.data$intensities[id == singleExperimentFilterExp()  & sizes >= input$startsize & sizes <= input$endsize]
+		intensities <- intensities[order(get(dye))]
+		tail(intensities, n = 1)[[dye]]
+		
+	})	
+	
+    output$maxsize <- renderUI({
+		toString(round(addedPeak.maxSize(),0));
+    })   
+    output$height <- renderUI({
+		toString(round(addedPeak.maxHeight(),0));
+		
+    })  
+    
+	output$closeModalButton <- renderUI({
+		actionButton(ns("closeModalButton"), "Close")
+	})	    
+    
+	observeEvent(input$closeModalButton,
+		ignoreNULL = T,   # Show modal on start up
+        removeModal()
+	)
+    
+	output$saveButton <- renderUI({
+		actionButton(ns("saveButton"), "OK")
+	})	    
+    
+	observeEvent(input$saveButton, ignoreNULL = T, {
+			print(annotated.peaks$peaks)
+			dye <- fsa.data$markers[system == input$system]$dye
+			start.pos <- fsa.data$markers[system == input$system]$start.pos
+			end.pos <- fsa.data$markers[system == input$system]$end.pos
+			cytoband <- fsa.data$markers[system == input$system]$cytoband
+			newPeak <- list(
+				startpos.size = input$startsize,
+				endpos.size = input$endsize,
+				maxpos.size = addedPeak.maxSize(),
+				peak.height = addedPeak.maxHeight(),
+				system = input$system,
+				cytoband = cytoband,
+				id = singleExperimentFilterExp(),
+				dye = dye,
+				start.pos = start.pos,
+				end.pos = end.pos,
+				keep = T
+				)
+			
+			annotated.peaks$peaks <- rbindlist(list(annotated.peaks$peaks, newPeak), fill = T,  use.names = T)
+			print(annotated.peaks$peaks)
+			removeModal()
+		}
+	)    
     return(list(selected.peak = reactive(selected.peak$peak),
                 exportPeaksTable = reactive(peaksToExportDT()),
                 annotatedPeaks = reactive(annotated.peaks$peaks))
-                
                 )
 
 }
