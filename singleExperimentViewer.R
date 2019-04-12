@@ -234,15 +234,15 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
           if (nrow(intensities.id) == 0) next;
           annots <- list( text = paste(dyei, systemi), font = f, xref = 'paper', yref ='paper', yanchor = "bottom", xanchor = "center", align = "center",  x = 0.5,  y = 1,  showarrow = FALSE )
           p <- plot_ly(source = "B" ) %>% layout(annotations = annots, yaxis = list(range = singleExperimentYaxis()));
-          p <- add_trace(p, x = intensities.id[['sizes']], y= intensities.id[,get(dyei)],  type = 'scatter', mode = 'lines', line = list(color =  colors[[dyei]]$color), showlegend = F, hoverinfo = 'x+y')
+          p <- add_trace(p, x = intensities.id[['sizes']], y= intensities.id[,get(dyei)],  type = 'scattergl', mode = 'lines', line = list(color =  colors[[dyei]]$color), showlegend = F, hoverinfo = 'x+y')
           curves <- append(curves, paste("points",systemi, idi,dyei, sep = "%%"))
           if (length( annotated.peaks$peaks[!is.na(system) & system == systemi &id == idi & keep == T &  dye == dyei][['maxpos.size']]) > 0) { 
-            p <- add_trace(p, x = annotated.peaks$peaks[!is.na(system)& system == systemi & keep == T & id == idi & dye == dyei]$maxpos.size, name = paste0(sample(letters, 2), collapse = ""), y = annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei]$peak.height, marker = list(size = 6, color = colors[[dyei]]$color,line = list(color = colors[[dyei]]$color, width = 1)), text = annotated.peaks$peaks[!is.na(system)& system == systemi  & keep == T&id == idi & dye == dyei][['system']], showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
+            p <- add_trace(p, x = annotated.peaks$peaks[!is.na(system)& system == systemi & keep == T & id == idi & dye == dyei]$maxpos.size, name = paste0(sample(letters, 2), collapse = ""), y = annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei]$peak.height, marker = list(size = 6, color = colors[[dyei]]$color,line = list(color = colors[[dyei]]$color, width = 1)), text = annotated.peaks$peaks[!is.na(system)& system == systemi  & keep == T&id == idi & dye == dyei][['system']], showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
             curves <- append(curves, paste("peaks", systemi,idi,dyei, sep = "%%"))
           }
           if (!is.null(fsa.data$peaks$bins)) {
             ladder.bins <- fsa.data$bins[system == systemi]
-            p <- add_trace(p, x = ladder.bins$inferred.pos, opacity = 0.01, y =  rep(singleExperimentYaxis()[2], nrow(ladder.bins)), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins$bin, showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
+            p <- add_trace(p, x = ladder.bins$inferred.pos, opacity = 0.01, y =  rep(singleExperimentYaxis()[2], nrow(ladder.bins)), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins$bin, showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
             curves <- append(curves, paste("hover", systemi,idi,dyei, sep = "%%"))
           }
         

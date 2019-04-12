@@ -17,8 +17,7 @@ analysisParametersUI<- function(id) {
 analysisParameters <- function(input,output,session, data, predefined.parameters) {
   ns <- session$ns
   default.min.peak <- 2000
-  parameters <- reactiveValues(minPeakHeight = list(), ladderSample = list(), idi = NULL, sample.min.peak = list(), global.default.min.peak = default.min.peak)
-  temp.parameters <- list(minPeakHeight = list(), ladderSample = list())
+  parameters <- reactiveValues(minPeakHeight = list(), aboveSample= list(), ladderSample = list(), idi = NULL, sample.min.peak = list(), global.default.min.peak = default.min.peak)
 
   observeEvent(predefined.parameters()$selection, {
 	req(predefined.parameters)
@@ -69,7 +68,8 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 					),
 					column(12, 
 						uiOutput(ns("minPeakHeight")),
-						uiOutput(ns("ladderSample"))
+						uiOutput(ns("ladderSample")),
+						uiOutput(ns("aboveSample"))
 					),
 					column(3, 
 						actionButton(ns("submitModalButton"), "Submit")
@@ -158,7 +158,15 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
     }
     checkboxInput(ns("ladderSample"), label = "ladder sample", value = default.val)
   })
-  
+  output$aboveSample <- renderUI({
+    req(data()$data$intensities$id)
+	req(input$sampleIdSelector)
+    default.val <- F
+    if (!is.null(parameters$aboveSample[[input$sampleIdSelector]])) {
+      default.val <- parameters$aboveSample[[input$sampleIdSelector]]
+    }
+    checkboxInput(ns("aboveSample"), label = "Always above", value = default.val)
+  })  
   
   observeEvent (input$sampleIdSelector, {
 	save.values()
@@ -230,6 +238,8 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 		}
 	)
 	parameters$ladderSample[[parameters$idi]] <- input$ladderSample
+	parameters$aboveSample[[parameters$idi]] <- input$aboveSample
+	
 	parameters$sample.min.peak[[parameters$idi]] <- input$defaultMinPeak
 	parameters$idi <- input$sampleIdSelector    
   }
@@ -259,7 +269,8 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 
   return(list(
     minPeakHeight = reactive(collectMinPeakHeights()),
-    ladderSample = reactive(parameters$ladderSample)
+    ladderSample = reactive(parameters$ladderSample),
+    aboveSample = reactive(parameters$aboveSample)
   ))
     
 

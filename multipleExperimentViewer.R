@@ -8,7 +8,8 @@ multipleExperimentViewerUI <- function(id){
   fluidPage(
     fluidRow(
         column(10,
-            plotlyOutput(ns("multipleExperimentPlot"), height = "800px")
+            plotlyOutput(ns("multipleExperimentPlot"), height = "800px"),
+            downloadButton(ns("export"), "Export")
         ),
         column(2, 
             DT::dataTableOutput(ns("onClick"))
@@ -20,7 +21,7 @@ multipleExperimentViewerUI <- function(id){
 }
 
 # module server function
-multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, selected.samples, selected.height , selected.width, selected.scale, selected.dyes) {
+multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, selected.samples, selected.height , selected.width, selected.scale, selected.dyes, nbSamplesPerPage, pageNb, above.samples) {
     ns <- session$ns
     curves.description <- reactiveValues(curves = NULL)
     
@@ -35,7 +36,6 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 
         
         
-        
         intensities <- fsa.data$standardized.data$intensities
         peaks <- fsa.data$peaks
         #print(peaks)
@@ -48,8 +48,21 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
             x.peaks = "peak.maxpos.time"
         } 
         ids <- unique(intensities$id)
-        ids <- intersect(ids, selected.samples$selectedSamples())
+        ids <- sort(intersect(ids, selected.samples$selectedSamples()))
+        ids <- setdiff(ids, above.samples())
         channels <- selected.dyes$selectedDyes()
+        nbAboveSamples <- length(above.samples())
+		nbSamplesPerPage <- nbSamplesPerPage()- nbAboveSamples
+		page.nb <- pageNb()
+		if (is.null(pageNb())) {
+			page.nb <- 1
+		}
+		startindex <- 1+((page.nb-1)*nbSamplesPerPage)
+		endindex <- min(startindex+nbSamplesPerPage-1, length(ids))
+		print(above.samples())
+		print(startindex)
+		print(endindex)
+		ids <- c(above.samples(), ids[startindex:endindex])
 
         minval <- min(intensities[,..channels])               
         plots <- list()
@@ -62,7 +75,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
             annots <- list( text = idi, font = f, xref = "paper", yref = "paper", yanchor = "bottom", xanchor = "center", align = "center",  x = 0.5,  y = 1,  showarrow = FALSE )
             p <- plot_ly() %>% layout(height = 800, annotations = annots,xaxis = list(title = x.scale, titlefont = f, range = selected.width$selectedWidth()) , yaxis = list(title = idi, titlefont = f, range = selected.height$selectedHeight()) );
             for (channel in channels) {
-              p <- add_trace(p, x = intensities.id[[x.scale]], y= intensities.id[,get(channel)],  type = 'scatter', mode = 'lines', line = list(color =  colors[[channel]]$color), showlegend = F, hoverinfo = 'x+y')
+              p <- add_trace(p, x = intensities.id[[x.scale]], y= intensities.id[,get(channel)],  type = 'scattergl', mode = 'lines', line = list(color =  colors[[channel]]$color), showlegend = F, hoverinfo = 'x+y')
               curves <- append(curves, paste("points", idi,channel, sep = "%%"))
               if (!is.null(peaks)) {
                 if (length(peaks[!is.na(system) &id == idi & dye == channel][[x.peaks]]) > 0) { 
@@ -71,8 +84,8 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
                 }
               }
 			  if (!is.null(fsa.data$peaks$bins) && length(channels) == 1) {
-				ladder.bins <- fsa.data$bins[dye == channel]
-				p <- add_trace(p, x = ladder.bins[dye == channel]$inferred.pos, opacity = 0.01, y =  rep(selected.height$selectedHeight()[2], nrow(ladder.bins[dye == channel])), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins[dye == channel]$bin, showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
+# 				ladder.bins <- fsa.data$bins[dye == channel]
+				p <- add_trace(p, x = ladder.bins[dye == channel]$inferred.pos, opacity = 0.01, y =  rep(selected.height$selectedHeight()[2], nrow(ladder.bins[dye == channel])), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins[dye == channel]$bin, showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
 				curves <- append(curves, paste("hover",idi,channel, sep = "%%"))
 			  }
 			  plots[[idi]] <- p
@@ -92,14 +105,17 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 				}
 			  }			  
             }
-
-            
         }
         sp <- subplot(plots, nrows = length(ids), shareX = TRUE, titleY = TRUE)
         curves.description$curves = curves
-#         sp <- layout(sp, annotations = layouts, title = "MUCOMUC")
-        sp %>% layout(shapes = shapelist)
+		sp <- sp %>% layout(shapes = shapelist)
+		sp
     })
+    
+
+    
+    
+    
     output$onClick <- DT::renderDataTable({
       req(fsa.data$peaks)
       d <- event_data("plotly_click")
@@ -132,6 +148,69 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
      row.names(result.dt) <- names(result.vec)
      names(result.dt) <- paste(mssystem, channel)
      datatable(result.dt, options = list(dom = 't'))
-    })    
+    })
+    
+	runName <- reactive( {
+		sample.date <- fsa.data$data$expdate[[1]]
+		shortName = paste0("run-", sample.date)
+		result <- shortName
+		if (sample.date == "") {
+		  result <- "run"
+		}
+		result
+	})        
+    
+	output$export <- downloadHandler(
+		filename = function(file) {
+		"muc.pdf"
+		},
+		content = function(file) {
+			
+		req(length(selected.samples$selectedSamples()) > 0)
+		print(file)
+		intensities <- fsa.data$standardized.data$intensities
+		peaks <- fsa.data$peaks
+		x.scale <- "sizes"
+		x.peaks = "maxpos.size"
+		if (selected.scale$selectedScale() == 'Raw' || selected.scale$scalingDye() == 'None' ) {
+			x.scale = 'time'
+			x.peaks = "peak.maxpos.time"
+		} 
+		ids <- unique(intensities$id)
+		print(ids)
+		all.ids <- sort(setdiff(ids, above.samples()))
+
+		channels <- selected.dyes$selectedDyes()
+		nbAboveSamples <- length(above.samples())
+		nbSamplesPerPage <- nbSamplesPerPage() - nbAboveSamples
+	    page.nbs <- ceiling(length(all.ids) / nbSamplesPerPage)
+
+		pdf(file)
+		par(mfrow = c(nbSamplesPerPage+nbAboveSamples,1), mar=c(1,1,1,1))
+		for (page.nb in 1:page.nbs) {
+			startindex <- 1+((page.nb-1)*nbSamplesPerPage)
+			endindex <- min(startindex+nbSamplesPerPage-1, length(all.ids))
+			print(startindex)
+			print(endindex)
+			
+			ids <- c(above.samples(), all.ids[startindex:endindex])
+			for (idi in ids) {
+				intensities.id <- intensities[id == idi]
+				plot(0,0, col = "white", xlim = selected.width$selectedWidth(), ylim = selected.height$selectedHeight(), main = idi);
+				for (channel in channels) {
+					lines(intensities.id[[x.scale]], intensities.id[,get(channel)], col = colors[[channel]]$color)
+				}
+				grid()
+				
+			}
+		
+		}
+		
+		dev.off()
+
+		}
+		,contentType="application/pdf"
+	)    
+		
 
 }

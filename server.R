@@ -2,7 +2,7 @@ library(data.table)
 library(plotly)
 library(shinyalert)
 library(rjson)
-
+source("multipleViewerPageSelector.R")
 source("multipleViewerSampleSelector.R")
 source("functions.R")
 source("selectedPeakDisplayer.R")
@@ -70,6 +70,7 @@ shinyServer(function(input, output,session) {
       selected.height <- callModule(heightSelector, "myheightselector", reactive(fsa.data), selected.dyes)
       selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)
       multipleViewerSamplesSelected <- callModule(multipleViewersampleSelector, "mymultipleViewersampleSelector", reactive(fsa.data))
+      pageSelected <- callModule(multipleViewerPageSelector, "mymultipleviewerpageselector", reactive(fsa.data), reactive(multipleViewerSamplesSelected$selectedSamples()),reactive(parameters))
       
 	  dataExporterFilters <- callModule(dataExporterFilter, "mydataExportFilter",reactive(fsa.data), selected.scale)
 # 	  selected.peaks <- reactiveValues(selected.peak = NULL, exportPeaksTable = NULL, annotatedPeaks = NULL)
@@ -133,9 +134,15 @@ shinyServer(function(input, output,session) {
         req(selected.height$selectedHeight())
         req(selected.width$selectedWidth())
         req(fsa.data$standardized.data)
-        callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data, colors, multipleViewerSamplesSelected, selected.height, selected.width, selected.scale, selected.dyes)
-        
-        
+        above.samples <- vector()
+        ids <- names(parameters$aboveSample())
+		for (id in ids) {
+			if (parameters$aboveSample()[[id]]) {
+				above.samples <- append(above.samples, id)
+			}
+		}        
+        callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data, colors, multipleViewerSamplesSelected, selected.height, selected.width, selected.scale, selected.dyes, reactive(pageSelected$samplesPerPage()), reactive(pageSelected$pageNb()), reactive(above.samples))
+
       })
       observe({
         req(selected.samples$selectedSamples()$datapath)
@@ -156,6 +163,7 @@ shinyServer(function(input, output,session) {
       
       observe({
         req(selected.analysis$selectedMarkers() != 'None')
+        req(selected.analysis$selectedMarkers())
         req(selected.scale$scalingDye() != 'None')
         req(selected.scale$selectedScale() != 'Raw')
         req(is.null(fsa.data$standardized.data$error))

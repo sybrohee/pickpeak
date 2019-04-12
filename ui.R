@@ -9,6 +9,7 @@ source("multipleExperimentViewer.R")
 source("singleExperimentViewer.R")
 source("heightSelector.R")
 source("widthSelector.R")
+source("multipleViewerPageSelector.R")
 source("dataExporterFilter.R")
 
 source("dataExporter.R")
@@ -77,6 +78,9 @@ shinyUI(
 								column(4, dyeSelectorUI("mydyeselector")),
 								column(8, multipleViewersampleSelectorUI("mymultipleViewersampleSelector"))
 							),
+							fluidRow(
+								column(12, multipleViewerPageSelectorUI("mymultipleviewerpageselector"))
+							),							
 							fluidRow(
 								column(1, fluidRow(" ")),
 								column(9, 

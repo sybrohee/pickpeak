@@ -31,7 +31,7 @@ widthSelector <- function(input,output,session, data, selected.scale) {
 
     maxval <- 100*(ceiling(minmaxvals[2]/100))
     minval <- 100*(floor(minmaxvals[1]/100))
-    sliderInput(ns("selectedWidth"), label = "X-axis", minval, maxval, value = c(minval, maxval), 100, tick = F)
+    sliderInput(ns("selectedWidth"), label = "X-axis", minval, maxval, value = c(minval, maxval), 50, tick = F)
   })
   
   return(list(selectedWidth = reactive(input$selectedWidth)))
