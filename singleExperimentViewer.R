@@ -23,7 +23,7 @@ singleExperimentViewerUI <- function(id){
 }
 
 # module server function
-singleExperimentViewer <- function(input, output, session, fsa.data, colors, singleExperimentFilterDyes, singleExperimentFilterExp, singleExperimentYaxis, singleExperimentFilterSystem, singleExperimentSystemDyeSelector,minValueFilterThresholdField, minValueFilterThresholdButton, includeExcludeButton, ladder.sample) {
+singleExperimentViewer <- function(input, output, session, fsa.data, colors, singleExperimentFilterDyes, singleExperimentFilterExp, singleExperimentYaxis, singleExperimentFilterSystem, singleExperimentSystemDyeSelector,allSystemsSameLine,minValueFilterThresholdField, minValueFilterThresholdButton, includeExcludeButton, ladder.sample) {
     ns <- session$ns
     proxyFO <- dataTableProxy("filteredOutPeaks")
     proxySE <- dataTableProxy("exportPeaksTable")
@@ -35,7 +35,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     plot.description <- reactiveValues(description = NULL)
     annotated.peaks <- reactiveValues(peaks = data.table(fsa.data$peaks, keep = T))
     addpeaks <- reactiveValues(system = NULL, from = NULL, to = NULL)
-    print("initialisation des boutons rouges")
+    
     
     
     colorder <-  c("system", "size", "height", "cytoband"  , "pos", "dye"  , "color", "peak.maxpos.time",   "peak.startpos.time", "peak.endpos.time","id","startpos.size",  "endpos.size", "keep")
@@ -221,6 +221,19 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
         intensities <- fsa.data$standardized.data$intensities
         plots <- list()
         
+        
+        onOneLine <- F
+        print("lala3")
+        print(allSystemsSameLine())
+		if (!is.null(allSystemsSameLine()) && allSystemsSameLine() && length(dyes) == 1 && singleExperimentSystemDyeSelector() == "dye") {
+		  onOneLine <- T
+		}
+		if (onOneLine) {
+		  markers.sorted <- fsa.data$markers[order(start.pos)]
+		  
+          systems <- unique(markers.sorted[dye == dyes]$system)
+        }
+ 
 
         curves <- vector()
         for (systemi in systems) {
@@ -228,24 +241,34 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
           dyei <- unique(fsa.data$markers[system == systemi]$dye)
           
           if (! dyei %in% dyes) next;
+          
           startpos <-  fsa.data$markers[system == systemi]$start.pos
           endpos <- fsa.data$markers[system == systemi]$end.pos
+
+          
+          
           intensities.id <- intensities[id == idi  & intensities$sizes >= startpos & intensities$sizes <= endpos]
+
           if (nrow(intensities.id) == 0) next;
           annots <- list( text = paste(dyei, systemi), font = f, xref = 'paper', yref ='paper', yanchor = "bottom", xanchor = "center", align = "center",  x = 0.5,  y = 1,  showarrow = FALSE )
+          
           p <- plot_ly(source = "B" ) %>% layout(annotations = annots, yaxis = list(range = singleExperimentYaxis()));
           p <- add_trace(p, x = intensities.id[['sizes']], y= intensities.id[,get(dyei)],  type = 'scattergl', mode = 'lines', line = list(color =  colors[[dyei]]$color), showlegend = F, hoverinfo = 'x+y')
           curves <- append(curves, paste("points",systemi, idi,dyei, sep = "%%"))
+          
+          
+          
           if (length( annotated.peaks$peaks[!is.na(system) & system == systemi &id == idi & keep == T &  dye == dyei][['maxpos.size']]) > 0) { 
-            p <- add_trace(p, x = annotated.peaks$peaks[!is.na(system)& system == systemi & keep == T & id == idi & dye == dyei]$maxpos.size, name = paste0(sample(letters, 2), collapse = ""), y = annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei]$peak.height, marker = list(size = 6, color = colors[[dyei]]$color,line = list(color = colors[[dyei]]$color, width = 1)), text = annotated.peaks$peaks[!is.na(system)& system == systemi  & keep == T&id == idi & dye == dyei][['system']], showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
+            p <- add_trace(p, x = annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei]$maxpos.size, name = paste0(sample(letters, 2), collapse = ""), y = annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei]$peak.height, marker = list(size = 10, color = colors[[dyei]]$color,line = list(color = colors[[dyei]]$color, width = 1)), text = annotated.peaks$peaks[!is.na(system)& system == systemi  & keep == T&id == idi & dye == dyei][['system']], showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
             curves <- append(curves, paste("peaks", systemi,idi,dyei, sep = "%%"))
           }
+          
           if (!is.null(fsa.data$peaks$bins)) {
             ladder.bins <- fsa.data$bins[system == systemi]
             p <- add_trace(p, x = ladder.bins$inferred.pos, opacity = 0.01, y =  rep(singleExperimentYaxis()[2], nrow(ladder.bins)), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins$bin, showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
             curves <- append(curves, paste("hover", systemi,idi,dyei, sep = "%%"))
           }
-        
+
           plots[[systemi]] <- p
           plotnb <- length(plots)
 		  xref.name = "x"
@@ -276,8 +299,11 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
         }
 
         curves.description$curves = curves
-        
-        sp <- subplot(plots,nrows = ceiling(length(names(plots))/2))
+		splots.rows <- ceiling(length(names(plots))/2)
+		if (onOneLine) {
+		  splots.rows <- 1
+		}
+        sp <- subplot(plots,nrows = splots.rows)
         sp 
         
     })
@@ -285,22 +311,29 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     
     observe({
         selected.peak$onclick <- event_data("plotly_click", source = "B")
-        
         req(!is.null(selected.peak$onclick))
+        print(selected.peak$onclick)
         curve.nb <- selected.peak$onclick[['curveNumber']]
-        curve.id <- curves.description$curves[curve.nb]
+        curve.id <- curves.description$curves[curve.nb+1]
         req(is.character(curve.id))
+
         if (is.character(curve.id) ) {
             curve.id.vec <- vector()
             curve.id.vec.list <- strsplit(curve.id, "%%")
             if (length(curve.id.vec.list) > 0) {
                 curve.id.vec <- curve.id.vec.list[[1]]
             }
-
+			print(curve.id)
+			
             systemi <- curve.id.vec[2]
             idi <- curve.id.vec[3]
             dyei <- curve.id.vec[4]
             peak <-  annotated.peaks$peaks[!is.na(system) & system == systemi & keep == T & id == idi & dye == dyei  & peak.height == selected.peak$onclick$y]
+#             print(systemi)
+#             print(idi)
+#             print(dyei)
+#             print(selected.peak$onclick$y)
+
             if (nrow(peak) > 0 && length(curve.id.vec) > 0) {
                 selected.peak$peak <- peaksToExportDT()[system == systemi &  floor(peaksToExportDT()$size) == floor(selected.peak$onclick$x) & height == selected.peak$onclick$y ]
                 selectRows(proxySE, NULL)

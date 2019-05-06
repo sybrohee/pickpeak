@@ -162,7 +162,7 @@ markedpeaks.to.real.bins <- function(bins,peaks, ladder.samples) {
 }
 
 
-scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500', standard.dye = 'LIZ', minpeakheights = NULL) {
+scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500', standard.dye = 'LIZ', minpeakheights = NULL, removeOutlyers = TRUE, minDist = 10) {
   # min.peak.height is a list of list
   # list(sample1(dye1=minval,dye2=minval, ...),
   #      sample2(dye1=minval,dye2=minval, ...)
@@ -194,9 +194,17 @@ scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500
         
         
         names(peaks.dt) <- c("peak.height", "peak.maxpos", "peak.startpos", "peak.minpos")
-
-        valid.peaks <- tail(peaks.dt, n = length(scalei))
+        
+        
+        peaksdist <- abs(peaks.dt$peak.maxpos - c(peaks.dt$peak.maxpos[2:nrow(peaks.dt)], 0))
+        peaks.dt$dist <- peaksdist
+        valid.peaks <- peaks.dt[peaksdist > minDist,]
+        median.height <- median(tail(valid.peaks$peak.height, n = length(scalei)))
+        
+        valid.peaks <- valid.peaks[peak.height < 2*median.height]
+        valid.peaks <- tail(valid.peaks, n = length(scalei))
         valid.peaks$sizes <- scalei
+        print(valid.peaks)
         lm.model <- lm(sizes~peak.maxpos, valid.peaks)
         intensities[id == idi, sizes := lm.model$coefficients[1] + time*lm.model$coefficients[2]]
         models[[idi]] <- lm.model

@@ -11,6 +11,7 @@ singleExperimentFiltersAndLayoutsUI <- function(id){
         uiOutput(ns("singleExperimentSystemDyeSelector")),
         uiOutput(ns("singleExperimentFilterSystem")),
         uiOutput(ns("singleExperimentFilterDyes")),
+        uiOutput(ns("allSystemsSameLine")),
         uiOutput(ns("singleExperimentYaxis"))
     )
   )
@@ -23,10 +24,19 @@ singleExperimentFiltersAndLayouts <- function(input,output,session, data) {
     req(data()$data$dyes)
     req(input$singleExperimentSystemDyeSelector == 'dye')
 	req(input$singleExperimentFilterExp)
-    req(input$singleExperimentSystemDyeSelector == 'system') 
     pickerInput(ns("singleExperimentFilterDyes"), label = "Dyes", choices = as.vector(data()$data$dyes), selected = as.vector(data()$data$dyes),multiple = TRUE,options=list(`actions-box` = TRUE))
     
   })
+  output$allSystemsSameLine <- renderUI({
+    req(data()$data$dyes)
+    req(input$singleExperimentSystemDyeSelector == 'dye')
+	req(input$singleExperimentFilterExp)
+	req(length(input$singleExperimentFilterDyes) == 1)
+    checkboxInput(ns("allSystemsSameLine"), label = "All systems together", value = F)
+
+    
+  })  
+  
   output$singleExperimentFilterSystem <- renderUI({
     req(data()$data$dyes)
     req(input$singleExperimentFilterExp)
@@ -97,7 +107,8 @@ singleExperimentFiltersAndLayouts <- function(input,output,session, data) {
         singleExperimentFilterExp = reactive(input$singleExperimentFilterExp),
         singleExperimentYaxis = reactive(input$singleExperimentYaxis),
         singleExperimentSystemDyeSelector = reactive(input$singleExperimentSystemDyeSelector),
-        singleExperimentFilterSystem = reactive(input$singleExperimentFilterSystem)
+        singleExperimentFilterSystem = reactive(input$singleExperimentFilterSystem),
+        allSystemsSameLine =  reactive(input$allSystemsSameLine)
     )
   )
 

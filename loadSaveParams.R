@@ -42,12 +42,12 @@ loadSaveParams <- function(input,output,session, data, global.parameters) {
 			parameters <- fread(predef.file)        
 			paramlist <- names(parameters)
 			toAdd <- list()
-			if (input$loadParams %in%  parameters$id) {
-				rowi <- which(parameters$id == input$loadParams)
+			if (input$id %in%  parameters$id) {
+				rowi <- which(parameters$id == input$id)
 				parameters <- parameters[-rowi,]
 			}
 			for (paramName in paramlist) {
-				toAdd[[paramName]] = input[[paramName]]
+				toAdd[[paramName]] <- input[[paramName]]
 			}
 			parameters <- unique(rbindlist(list(parameters, toAdd), use.names = T))
 			write.table(parameters, predef.file, sep = "\t", quote = F, row.names = F)
