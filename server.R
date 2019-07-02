@@ -26,8 +26,8 @@ source("analysisParameters.R")
 
 shinyServer(function(input, output,session) {
 	  global.parameters <- fromJSON(file = "../pp_localConfigShiny.json")
-	  colors <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "colors.json"))
-	  scales <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "scales.json"))
+	    colors <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "colors.json"))
+	    scales <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "scales.json"))
       fsa.data <- reactiveValues(data = NULL, standardized.data = NULL, bins = NULL, markers = NULL, peaks = NULL, annotatedpeaks = NULL, binpeaks = NULL)
       predefined.parameters <- reactiveValues(parameters = NULL, selection = NULL)
 
@@ -35,11 +35,11 @@ shinyServer(function(input, output,session) {
       lsParams <- callModule(loadSaveParams, "myloadSaveParams", reactive(fsa.data),global.parameters)
       
       observeEvent(lsParams$openModalBtn(), {
-			updateSelectInput(session, inputId = "analysistype", selected = "custom")
-		}
+			  updateSelectInput(session, inputId = "analysistype", selected = "custom")
+		    }
       )
       
-      observeEvent(selected.samples$selectedSamples,  {
+  observeEvent(selected.samples$selectedSamples,  {
 		fsa.data$standardized.data <- NULL
 		fsa.data$bins <- NULL
 		fsa.data$markers <-  NULL
@@ -113,7 +113,7 @@ shinyServer(function(input, output,session) {
 
 		fsa.data$standardized.data <- NULL
 		fsa.data$bins <- NULL
-		fsa.data$markers <-  NULL
+  	fsa.data$markers <-  NULL
 		fsa.data$peaks <- NULL
 		fsa.data$binpeaks <- NULL
 		std.data <- scale.timeseries(fsa.data$data, ladder = selected.scale$selectedScale(), scales = scales, standard.dye = standard.dye, minpeakheights = parameters$minPeakHeight())
@@ -169,6 +169,7 @@ shinyServer(function(input, output,session) {
         req(is.null(fsa.data$standardized.data$error))
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
+        # print(fsa.data$markers)
         bin.file <- file.path("www","data", "markers",selected.analysis$markersList()[marker.file == basename(selected.analysis$selectedMarkers())]$bin.file)
         ladder.samples <- vector()
         ids <- names(parameters$ladderSample())

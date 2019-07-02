@@ -39,19 +39,20 @@ shinyUI(
     fluidRow(
         column(
             2, 
-            column(10, sampleSelectorUI("mysampleselector")),
+            
             conditionalPanel(
                 condition = "input.tabs1 == 'Experiment viewer'",
                 column(1, fluidRow()),
                 column(11, 
 					fluidRow(
+					  column(11, sampleSelectorUI("mysampleselector")),
 						column(11, id = 'peakFilterPanel',
 							fluidRow(
 								column(11,
 									uiOutput("analysistype")
 								)
 							),
-							conditionalPanel(condition = "input.analysistype == 'custom'",
+  							conditionalPanel(condition = "input.analysistype == 'custom'",
 								fluidRow(
 									column(12, 
 											analysisParametersUI("myAnalysisParameters"),

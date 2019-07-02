@@ -6,7 +6,7 @@ library(DT)
 sampleSelectorUI <- function(id){
   ns <- NS(id)
   tagList(
-      fileInput(ns("fileList"), "Choose FSA File",
+      fileInput(ns("fileList"), "Select FSA file(s)",
                  multiple = TRUE,
                  accept = c("fsa"))
     )

@@ -39,6 +39,7 @@ singleExperimentFiltersAndLayouts <- function(input,output,session, data) {
   
   output$singleExperimentFilterSystem <- renderUI({
     req(data()$data$dyes)
+    req(data()$markers)
     req(input$singleExperimentFilterExp)
     req(input$singleExperimentSystemDyeSelector == 'system')
 
@@ -66,6 +67,7 @@ singleExperimentFiltersAndLayouts <- function(input,output,session, data) {
   
   
   output$singleExperimentYaxis <- renderUI({
+    req(data()$markers)
     req(data()$data$intensities)
     req(
 		(length(input$singleExperimentFilterDyes) > 0 && input$singleExperimentSystemDyeSelector == 'dye') || 

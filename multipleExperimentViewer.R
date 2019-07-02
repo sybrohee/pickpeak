@@ -59,9 +59,9 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 		}
 		startindex <- 1+((page.nb-1)*nbSamplesPerPage)
 		endindex <- min(startindex+nbSamplesPerPage-1, length(ids))
-		print(above.samples())
-		print(startindex)
-		print(endindex)
+		# print(above.samples())
+		# print(startindex)
+		# print(endindex)
 		ids <- c(above.samples(), ids[startindex:endindex])
 
         minval <- min(intensities[,..channels])               
@@ -167,7 +167,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 		content = function(file) {
 			
 		req(length(selected.samples$selectedSamples()) > 0)
-		print(file)
+		# print(file)
 		intensities <- fsa.data$standardized.data$intensities
 		peaks <- fsa.data$peaks
 		x.scale <- "sizes"
@@ -177,7 +177,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 			x.peaks = "peak.maxpos.time"
 		} 
 		ids <- unique(intensities$id)
-		print(ids)
+		# print(ids)
 		all.ids <- sort(setdiff(ids, above.samples()))
 
 		channels <- selected.dyes$selectedDyes()
@@ -190,9 +190,9 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 		for (page.nb in 1:page.nbs) {
 			startindex <- 1+((page.nb-1)*nbSamplesPerPage)
 			endindex <- min(startindex+nbSamplesPerPage-1, length(all.ids))
-			print(startindex)
-			print(endindex)
-			
+			# print(startindex)
+			# print(endindex)
+			# 
 			ids <- c(above.samples(), all.ids[startindex:endindex])
 			for (idi in ids) {
 				intensities.id <- intensities[id == idi]

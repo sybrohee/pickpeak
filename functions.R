@@ -204,7 +204,7 @@ scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500
         valid.peaks <- valid.peaks[peak.height < 2*median.height]
         valid.peaks <- tail(valid.peaks, n = length(scalei))
         valid.peaks$sizes <- scalei
-        print(valid.peaks)
+        # print(valid.peaks)
         lm.model <- lm(sizes~peak.maxpos, valid.peaks)
         intensities[id == idi, sizes := lm.model$coefficients[1] + time*lm.model$coefficients[2]]
         models[[idi]] <- lm.model

@@ -15,6 +15,7 @@ singleExperimentViewerUI <- function(id){
             DT::dataTableOutput(ns("filteredOutPeaks"))
         ),    
         column(8,
+            textOutput(ns("noSelectedMarkers")),
             plotlyOutput(ns("singleExperimentPlot"), height = "800px")
         )
     ) 
@@ -75,7 +76,16 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
       selected.peak$peak <- peaksToExportDT()[input$exportPeaksTable_rows_selected,]
       selectRows(proxyFO, NULL)
     })
-    
+    output$noSelectedMarkers <- renderText({
+      resultText = ""
+      print(nrow(fsa.data$markers))
+      if (is.null(fsa.data$markers) || nrow(fsa.data$markers) == 0) {
+        resultText <- "No system has been selected yet";
+      } else {
+        resultText <- ""
+      }
+      
+    })
 
     
     peaksToExportDT <- reactive({
@@ -122,16 +132,22 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     })
     
     output$exportPeaksTableTitle <- renderText({
+        req(!is.null(fsa.data$markers))
+        req(nrow(fsa.data$markers) > 0)
         req(nrow(peaksToExportDT()) > 0)
         "<h3>Selected peaks</H3>"
     })
     output$filteredOutPeaksTitle <- renderText({
+        req(!is.null(fsa.data$markers))
+        req(nrow(fsa.data$markers) > 0)
         req(nrow(peaksToFilterOutDT()) > 0)
         "<h3>Excluded peaks</h3>"
     })
     
     output$filteredOutPeaks <- DT::renderDataTable({
-
+      
+      req(!is.null(fsa.data$markers))
+      req(nrow(fsa.data$markers) > 0)
       req(nrow(peaksToFilterOutDT()) > 0)
 
       datatable(
@@ -159,6 +175,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     
     output$exportPeaksTable <- DT::renderDataTable({
       req(fsa.data$peaks)
+      req(nrow(fsa.data$markers) > 0)
       datatable(
         peaksToExportDT(),
         extension = 'Scroller',
@@ -192,8 +209,9 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
     
     
     output$singleExperimentPlot <- renderPlotly({
-
-		req(singleExperimentYaxis())
+      req(!is.null(fsa.data$markers))
+      req(nrow(fsa.data$markers) > 0)
+		  req(singleExperimentYaxis())
 
 		
 		req(singleExperimentFilterExp())
@@ -355,7 +373,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
 		xrange.values <- range.values[grepl("^x", names(range.values))]
 		xrange <- range(xrange.values)
 		print(paste("Adding a peak for ", systemi, "from", paste(xrange, collapse = " to ")))
-		addpeaks$system <- systemi
+		addpeaks$system <- system
 		addpeaks$from <- xrange[1]
 		addpeaks$to <- xrange[2]
 		showModal(myAddPeakModal())
