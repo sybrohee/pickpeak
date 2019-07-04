@@ -85,7 +85,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
               }
 			  if (!is.null(fsa.data$peaks$bins) && length(channels) == 1) {
 # 				ladder.bins <- fsa.data$bins[dye == channel]
-				p <- add_trace(p, x = ladder.bins[dye == channel]$inferred.pos, opacity = 0.01, y =  rep(selected.height$selectedHeight()[2], nrow(ladder.bins[dye == channel])), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins[dye == channel]$bin, showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
+				p <- add_trace(p, x = ladder.bins[dye == channel]$inferred.pos, opacity = 0.01, y =  rep(selected.height$selectedHeight()[2], nrow(ladder.bins[dye == channel])), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins[dye == channel]$bin, showlegend = F, hoverinfo = 'text',type = 'scatter', mode = 'markers');
 				curves <- append(curves, paste("hover",idi,channel, sep = "%%"))
 			  }
 			  plots[[idi]] <- p
