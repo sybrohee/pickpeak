@@ -75,7 +75,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
             annots <- list( text = idi, font = f, xref = "paper", yref = "paper", yanchor = "bottom", xanchor = "center", align = "center",  x = 0.5,  y = 1,  showarrow = FALSE )
             p <- plot_ly() %>% layout(height = 800, annotations = annots,xaxis = list(title = x.scale, titlefont = f, range = selected.width$selectedWidth()) , yaxis = list(title = idi, titlefont = f, range = selected.height$selectedHeight()) );
             for (channel in channels) {
-              p <- add_trace(p, x = intensities.id[[x.scale]], y= intensities.id[,get(channel)],  type = 'scattergl', mode = 'lines', line = list(color =  colors[[channel]]$color), showlegend = F, hoverinfo = 'x+y')
+              p <- add_trace(p, x = intensities.id[[x.scale]], y= intensities.id[,get(channel)],  type = 'scatter', mode = 'lines', line = list(color =  colors[[channel]]$color), showlegend = F, hoverinfo = 'x+y')
               curves <- append(curves, paste("points", idi,channel, sep = "%%"))
               if (!is.null(peaks)) {
                 if (length(peaks[!is.na(system) &id == idi & dye == channel][[x.peaks]]) > 0) { 
