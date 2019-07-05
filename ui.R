@@ -11,7 +11,7 @@ source("heightSelector.R")
 source("widthSelector.R")
 source("multipleViewerPageSelector.R")
 source("dataExporterFilter.R")
-
+source("multipleExperimentsRefresher.R")
 source("dataExporter.R")
 source("analysisParameters.R")
 source("singleExperimentPeakAnalyzer.R")
@@ -92,6 +92,14 @@ shinyUI(
 								
 								),
 								column(1, fluidRow(" "))
+							),
+							fluidRow(
+								column(1, fluidRow(" ")),
+								column(9, 
+									fluidRow(								
+										multipleExperimentsRefresherUI("mymultipleexperimentsrefresher")
+									)
+								)
 							)
 						)
 					)

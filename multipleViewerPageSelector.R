@@ -3,10 +3,16 @@ library(shiny)
 # module UI function
 multipleViewerPageSelectorUI <- function(id){
   ns <- NS(id)
-  fluidRow(
-	column(6, uiOutput(ns("samplesPerPage"))),
-	column(5, uiOutput(ns("pageNb")))
-  )
+  fluidPage(
+	fluidRow(
+		column(6, htmlOutput(ns("samplesPerPageTitle"))),
+		column(5, htmlOutput(ns("pageNbTitle")))
+	),
+	fluidRow(
+		column(6, uiOutput(ns("samplesPerPage"))),
+		column(5, uiOutput(ns("pageNb")))
+	)
+  ) 
 }
 
 # module server function
@@ -15,8 +21,18 @@ multipleViewerPageSelector <- function(input,output,session, data, selected.samp
 
   output$samplesPerPage <- renderUI({
     req(data()$data$intensities$id)
-    numericInput(ns("samplesPerPage"), label = "Samples per page",  value = 6)
+    numericInput(ns("samplesPerPage"), label = "",  value = 6)
   })
+  output$samplesPerPageTitle <- renderText({
+    req(data()$data$intensities$id)
+    "<b>Samples per page</b>"
+  })  
+  output$pageNbTitle <- renderText({
+    req(data()$data$intensities$id)
+    req(input$samplesPerPage)  
+    "<b>Page nb</b>"
+  }) 
+  
   
   output$pageNb <- renderUI({
     req(data()$data$intensities$id)
@@ -36,7 +52,7 @@ multipleViewerPageSelector <- function(input,output,session, data, selected.samp
     req(input$samplesPerPage < nbselectedsamples)
     maxval <- ceiling(nbselectedsamples/sample.per.pages )
 
-    numericInput(ns("pageNb"), label = "Page",  value = 1, min = 1, max = maxval)
+    numericInput(ns("pageNb"), label = "",  value = 1, min = 1, max = maxval)
   })
   
   return(

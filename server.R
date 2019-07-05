@@ -1,3 +1,4 @@
+options(shiny.reactlog = TRUE)
 library(data.table)
 library(plotly)
 library(shinyalert)
@@ -16,6 +17,7 @@ source("linearRegressionViewer.R")
 source("peakAnalyzer.R")
 source("heightSelector.R")
 source("dataExporter.R")
+source("multipleExperimentsRefresher.R")
 source("dataExporterFilter.R")
 source("widthSelector.R")
 
@@ -65,10 +67,10 @@ shinyServer(function(input, output,session) {
       selected.dyes <- callModule(dyeSelector, "mydyeselector", reactive(fsa.data$data))
       singleExperimentFiltersAndLayouts <- callModule(singleExperimentFiltersAndLayouts,'mySingleExperimentFiltersAndLayouts',reactive(fsa.data))
       
-      selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)      
       
       selected.height <- callModule(heightSelector, "myheightselector", reactive(fsa.data), selected.dyes)
       selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)
+      pageRefreshed <- callModule(multipleExperimentsRefresher,"mymultipleexperimentsrefresher", reactive(fsa.data))
       multipleViewerSamplesSelected <- callModule(multipleViewersampleSelector, "mymultipleViewersampleSelector", reactive(fsa.data))
       pageSelected <- callModule(multipleViewerPageSelector, "mymultipleviewerpageselector", reactive(fsa.data), reactive(multipleViewerSamplesSelected$selectedSamples()),reactive(parameters))
       
@@ -128,22 +130,10 @@ shinyServer(function(input, output,session) {
         selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)      
 
       })
-      observe({
-        req(selected.scale$selectedScale())
-        req(selected.dyes$selectedDyes())
-        req(selected.height$selectedHeight())
-        req(selected.width$selectedWidth())
-        req(fsa.data$standardized.data)
-        above.samples <- vector()
-        ids <- names(parameters$aboveSample())
-		for (id in ids) {
-			if (parameters$aboveSample()[[id]]) {
-				above.samples <- append(above.samples, id)
-			}
-		}        
-        callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data, colors, multipleViewerSamplesSelected, selected.height, selected.width, selected.scale, selected.dyes, reactive(pageSelected$samplesPerPage()), reactive(pageSelected$pageNb()), reactive(above.samples))
 
-      })
+	  callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data, colors, multipleViewerSamplesSelected, selected.height, selected.width, selected.scale, selected.dyes, reactive(pageSelected$samplesPerPage()), reactive(pageSelected$pageNb()), reactive(parameters$aboveSample()), pageRefreshed$refreshButton)
+
+     
       observe({
         req(selected.samples$selectedSamples()$datapath)
         callModule(linearRegressionViewer, "myLinearRegressionViewer", fsa.data)
