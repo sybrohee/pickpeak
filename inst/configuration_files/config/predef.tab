@@ -1,0 +1,5 @@
+id	standard.dye	Dye1	Dye2	Dye3	Dye4	Dye5	analysis_type	ladder
+paternity	LIZ	900	900	900	900	500	paternity_v17	ILS500
+mucomuc	ROX	5000	100	100	100	100	amplidex_xfra	ROX1000
+xfra	ROX	5000	100	100	100	100	amplidex_xfra	ROX1000
+HNPCC	ROX	900	900	900	300	500	None	LIZ500

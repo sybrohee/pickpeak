@@ -1,0 +1,4 @@
+{
+	"predefined_parameters":"/path/to/predef.tab",
+	"datadir":"/path/to/datadir"
+}

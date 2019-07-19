@@ -1,0 +1,24 @@
+Package: pickpeak
+Title: a simple shiny app
+Version: 0.9
+Authors@R: person("Sylvain", "Brohee", email = "sylvain.brohee@ipg.be", role = c("aut", "cre"))
+Description: A simple shiny app to analyze capillary electrophoresis results.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Imports: shiny,
+    data.table, 
+    plotly, 
+    shinyalert, 
+    rjson,
+    DT,
+    XLConnect,
+    seqinr,
+    shinyjs,
+    pracma,
+    shinyWidgets
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

@@ -1,0 +1,30 @@
+{
+  "6-FAM": {
+    "color": "#0101DF",
+    "cval": "blue"
+  },
+  "VIC": {
+    "color": "#31B404",
+    "cval": "green"
+  },  
+  "NED": {
+    "color": "#000000",
+    "cval": "yellow"
+  },  
+  "PET": {
+    "color": "#FF0000",
+    "cval": "red"
+  },  
+  "LIZ": {
+    "color": "#FFBF00",
+    "cval": "orange"
+  },
+  "ROX": {
+    "color": "#FF0000",
+    "cval": "red"
+  }, 
+  "HEX": {
+    "color": "#00FF00",
+    "cval": "green"
+  }
+}
