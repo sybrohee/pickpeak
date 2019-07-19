@@ -1,12 +1,9 @@
-# Variant Explorer shiny App
-# Nicolas Simonis, Institut de Pathologie et Genetique, Gosselies
+
 
 # Export Module
 
-library(shiny)
-library(shinyjs)
-library(XLConnect)
-
+#' module exportPeaks UI function
+#' @export
 exportPeaksUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -17,6 +14,9 @@ exportPeaksUI <- function(id){
      HTML("<br>&nbsp;")
   )
 }
+#' module exportPeaks server function
+#' @export
+
 
 exportPeaks <- function(input,output,session, exportPeaksTable, colors, markers, markersList, seqdates, selected.sample ) {
   ns <- session$ns

@@ -1,7 +1,11 @@
-library(seqinr)
-library(pracma)
-library(data.table)
 
+#' Wrapper around seqinr::read.abif to generate a list with the content of a set of FSA files
+#' @import data.table
+#' @importFrom seqinr read.abif
+#' @param files vector of FSA file(s)
+#' @param dyes.default vector containing the id of the dye name (default is c(Dye1 = '6-FAM', Dye2 = 'HEX', Dye3 = 'NED', Dye4 = 'ROX'))
+#' @return a list containing abif.data : a data.table containing the raw data of the fsa file; dyes : of vector containing the names of dyes; expdate : a named vector containing the experiment date
+#' @export
 my.read.fsa <- function(files, dyes.default = c(Dye1 = '6-FAM', Dye2 = 'HEX', Dye3 = 'NED', Dye4 = 'ROX')) {
   result <- list()
   abif.data <- data.table()
@@ -32,7 +36,7 @@ my.read.fsa <- function(files, dyes.default = c(Dye1 = '6-FAM', Dye2 = 'HEX', Dy
 			
 		}
     }
-	
+	expdate
 
 
 	
@@ -40,7 +44,8 @@ my.read.fsa <- function(files, dyes.default = c(Dye1 = '6-FAM', Dye2 = 'HEX', Dy
 	names(abif.data.i) <- dyes.i[1:length(dyes.i)]
 	dyes <- dyes.i
 	
-    abif.data.i$id <- gsub('[^\x20-\x7E]', "", abif$Data$SpNm.1)
+	abif.data.i$id <- gsub('[^\x20-\x7E]', "", abif$Data$SpNm.1)
+	abif.data.i$id <- gsub('\\+$', "", abif.data.i$id)
     abif.data.i$time <- 1:nrow(abif.data.i)
     day <- paste0("0", abif$Data$RUND.1$day)
     month <- paste0("0", abif$Data$RUND.1$month)
@@ -61,6 +66,14 @@ my.read.fsa <- function(files, dyes.default = c(Dye1 = '6-FAM', Dye2 = 'HEX', Dy
 }
 
 
+#' Given the (rescaled) intensities, detects the peaks and annotate them with the system they are supposed to belong to.
+#' @importFrom data.table foverlaps
+#' @importFrom pracma findpeaks
+#' @param fsa.data 
+#' @param minpeakheights do not consider peaks that have lower intensities than minpeakheights. Must be a list[[samplename]][[dyename]]
+#' @param boolean removes stutter peaks
+#' @return for each sample and each probe a set of peaks (in a data.table) together with the system they are interesting with.
+#' @export
 peaks.to.markers <- function(fsa.data, minpeakheights,  removeStutters) {
     dyes <- fsa.data$data$dyes
     ids <- unique(fsa.data$standardized.data$intensities$id)
@@ -70,7 +83,7 @@ peaks.to.markers <- function(fsa.data, minpeakheights,  removeStutters) {
     for (dyei in dyes) {
         for (idi in ids) {
             min.peak.height = minpeakheights[[idi]][[dyei]]
-            peaks.dt <- data.table(findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]],  nups = 3, zero = "+",minpeakdist = 3, minpeakheight = min.peak.height))
+            peaks.dt <- data.table(pracma::findpeaks(fsa.data$standardized.data$intensities[id == idi][[dyei]],  nups = 3, zero = "+",minpeakdist = 3, minpeakheight = min.peak.height))
 
             model.id <- fsa.data$standardized.data$models[[idi]]
             if (nrow(peaks.dt) > 0) {
@@ -103,13 +116,20 @@ peaks.to.markers <- function(fsa.data, minpeakheights,  removeStutters) {
     all.peaks.dt$diffvalues.div <- NULL
     markers <- fsa.data$markers
     setkey(markers, "dye", "start.pos", "end.pos")
-    all.peaks.overlaps <-  foverlaps(all.peaks.dt, markers , by.x=c("dye", "startpos.size", "endpos.size"))
+    all.peaks.overlaps <-  data.table::foverlaps(all.peaks.dt, markers , by.x=c("dye", "startpos.size", "endpos.size"))
 
     return(all.peaks.overlaps)
 }
 
 
-markedpeaks.to.real.bins <- function(bins,peaks, ladder.samples) {
+#' This function annotates the detected peaks in the ladder sample(s)  and the peaks that are annotated for this ladder.
+#' @import data.table
+#' @param bins result of the read.bin.file function
+#' @param peaks data.table with the detected peaks
+#' @param ladder.samples a vector containing the names of the ladder samples in the peaks data.table
+#' @return an annotated set of bins in a list
+#' @export
+markedpeaks.to.real.bins <- function(bins, peaks, ladder.samples) {
   error.systems <- vector()
   
   for (ladder.sample in ladder.samples) {
@@ -142,7 +162,7 @@ markedpeaks.to.real.bins <- function(bins,peaks, ladder.samples) {
   setkey(ladder.peaks, "system", "bin.start.pos", "bin.end.pos")
   
 
-  ladder.vs.samples <- foverlaps(samples.peaks, ladder.peaks, by.x = c("system", "startpos.size", "endpos.size"))
+  ladder.vs.samples <- data.table::foverlaps(samples.peaks, ladder.peaks, by.x = c("system", "startpos.size", "endpos.size"))
   ladder.vs.samples[,c('bin.start.pos', 'bin.end.pos') :=  NULL]
   result.error <- NULL
   if (length(error.systems) > 0) {
@@ -162,6 +182,19 @@ markedpeaks.to.real.bins <- function(bins,peaks, ladder.samples) {
 }
 
 
+#' Based on a standard.dye and a ladder, the function convert the time into molecular weight (based on a linear regression model)
+#' @import data.table
+#' @importFrom pracma findpeaks
+#' @param fsa.raw.data data.table containing the itensity values for each dye and each sample
+#' @param time column of fsa.raw.data data.table containing the values that should be scaled according to the scaling dye
+#' @param scales list of scales into data.tables
+#' @param ladder type of scaling system
+#' @param standard.dye id of the dye containing the scaling
+#' @param minpeakheights minimal intensity value to be considered as a peak
+#' @param removeOutlyers deprecated, not used anymore
+#' @param minDist minimal time distance between two peaks 
+#' @return a data table containing the molecular size values (obtained by normalizing accoding to a given scale of a given dye) vs the intensity values
+#' @export
 scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500', standard.dye = 'LIZ', minpeakheights = NULL, removeOutlyers = TRUE, minDist = 10) {
   # min.peak.height is a list of list
   # list(sample1(dye1=minval,dye2=minval, ...),
@@ -184,7 +217,7 @@ scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500
 
     for (idi in ids) {
         minval <- minpeakheights[[idi]][[standard.dye]]
-        peaks.dt <- data.table(findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = minval, zero = "+"))
+        peaks.dt <- data.table(pracma::findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = minval, zero = "+"))
         if (nrow(peaks.dt) < length(scalei)) {
 			error <- paste("Not enough peaks detected for sample", idi);
 			intensities$sizes <- intensities$time
@@ -226,55 +259,16 @@ scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500
   return (results)
 }
 
-read.fsa <- function(files = NULL, path = "./", sig.channel = 1:3, lad.channel = 105, pretrim = FALSE,
-                     posttrim = ".fsa", thresh = -100, verbose = TRUE){
-
-  if(is.null(files))
-    files <- list.files(path, pattern = "\\.fsa$", full.names = TRUE)
-  else
-    files <- paste(path, files, sep = "")
-
-  res <- do.call(rbind, lapply(files, function(file) {
-    if (verbose) message(file)
-    abif <- read.abif(file)
-    tag <- tag.trimmer(basename(file), pretrim, posttrim)
-    
-    lad.dat <- abif$Data[[paste('DATA.', lad.channel, sep='')]]
-    
-    res1 <- data.frame(tag = as.character(rep(tag, length(lad.dat))),
-                       chan = as.character(rep("standard", length(lad.dat))),
-                       time = as.numeric(1:length(lad.dat)),
-                       peak = as.numeric(lad.dat),
-                       stringsAsFactors = F)
-    
-    for (i in sig.channel) {
-      chan.dat <- abif$Data[[paste('DATA.', i, sep='')]]
-      res1 <- rbind(res1, data.frame(tag = as.character(rep(tag, length(chan.dat))),
-                                     chan = as.character(rep(i, length(chan.dat))),
-                                     time = as.numeric(1:length(chan.dat)),
-                                     peak = as.numeric(chan.dat)),
-                                     stringsAsFactors = F)
-    }
-    res1
-  }))
-    
-  if (thresh > -10) res <- subset(res, peak > thresh)
-  return(res)
-}
-
-tag.trimmer <- function(x, pretrim = FALSE, posttrim = FALSE) {
-  if(! is.na(pretrim)) {
-    x <- sub(paste("^", pretrim, sep = ""), "", x)
-  }
-  if(! is.na(posttrim)){
-    x <- sub(paste(posttrim, "$", sep = ""), "", x)
-  }
-  x
-} 
 
 
+#' Convert a bin file (GeneMapper idx format) to a data.Table that can be used by 
+#' @importFrom data.table fread
+#' @importFrom pracma findpeaks
+#' @param bin.file as used by GeneMapper that contains the position of the bins of a ladder sample.
+#' @return a data table containing for each peak the bin it is inferred to belong to
+#' @export
 read.bin.file <- function (bin.file) {
-  temp <- fread(bin.file)
+  temp <- data.table::fread(bin.file)
   if (temp$V1[1] == 'Version') { #idx formatted file
     temp.list <- list()
     marker.name <- NA
@@ -307,6 +301,14 @@ read.bin.file <- function (bin.file) {
 
   
 }
+
+#' Annotate all the peaks with their corresponding bin
+#' @import data.table 
+#' @param bins result of the read.bin.file function
+#' @param peaks data.table produced by peaks.to.marker
+#' @param ladder.samples vector of ladder samples
+#' @return a data table containing the position of the annotated bins
+#' @export
 
 bins.position <- function(bins, peaks, ladder.samples) {
   ladder.peaks <- peaks[id %in% ladder.samples & !is.na(system),c('bin', 'system', 'maxpos.size', 'dye')]

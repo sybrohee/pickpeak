@@ -2,13 +2,15 @@
 library(shiny)
 library(DT)
 
-# module UI function
+#' module multipleViewersampleSelector UI function
+#' @export
 multipleViewersampleSelectorUI <- function(id){
   ns <- NS(id)
   uiOutput(ns("sampleSelector"))
 }
 
-# module server function
+#' module multipleViewersampleSelector server function
+#' @export
 multipleViewersampleSelector <- function(input,output,session, data) {
   ns <- session$ns
 

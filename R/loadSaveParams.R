@@ -1,8 +1,8 @@
 
-library(shiny)
-library(DT)
 
-# module UI function
+
+#' module loadSaveParams UI function
+#' @export
 loadSaveParamsUI <- function(id) {
   ns <- NS(id)
   uiOutput(ns("openModalBtn"))
@@ -12,7 +12,8 @@ loadSaveParamsUI <- function(id) {
 
 
 
-# module server function
+#' module loadSaveParams server function
+#' @export
 loadSaveParams <- function(input,output,session, data, global.parameters) {
 	ns <- session$ns
 	predef.params <- reactiveValues(predefined.parameters = NULL, mode = "loader", newLoad = NULL)

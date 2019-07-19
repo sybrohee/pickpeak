@@ -2,7 +2,8 @@
 library(shiny)
 library(DT)
 
-# module UI function
+#' module singleExperimentFiltersAndLayouts UI function
+#' @export
 singleExperimentFiltersAndLayoutsUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -17,7 +18,8 @@ singleExperimentFiltersAndLayoutsUI <- function(id){
   )
 }
 
-# module server function
+#' module singleExperimentFiltersAndLayouts server function
+#' @export
 singleExperimentFiltersAndLayouts <- function(input,output,session, data) {
   ns <- session$ns
   output$singleExperimentFilterDyes <- renderUI({

@@ -2,7 +2,8 @@
 library(shiny)
 library(DT)
 
-# module UI function
+#' module widthSelector UI function
+#' @export
 widthSelectorUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -11,7 +12,8 @@ widthSelectorUI <- function(id){
   )
 }
 
-# module server function
+#' module widthSelector server function
+#' @export
 widthSelector <- function(input,output,session, data, selected.scale) {
   ns <- session$ns
 
@@ -61,7 +63,7 @@ widthSelector <- function(input,output,session, data, selected.scale) {
     maxval <- 100*(ceiling(minmaxvals[2]/100))
     minval <- 100*(floor(minmaxvals[1]/100))
     
-    numericInput(ns("selectedMaxWidth"), value = maxval, label = "min X", min = minval, max = maxval, step = 5000)
+    numericInput(ns("selectedMaxWidth"), value = maxval, label = "max X", min = minval, max = maxval, step = 5000)
   })
   
   

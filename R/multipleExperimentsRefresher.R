@@ -1,4 +1,5 @@
-# module UI function
+#' module multipleExperimentsRefresher UI function
+#' @export
 multipleExperimentsRefresherUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -7,7 +8,8 @@ multipleExperimentsRefresherUI <- function(id){
   )
 }
 
-# module server function
+#' module multipleExperimentsRefresher server function
+#' @export
 multipleExperimentsRefresher <- function(input,output,session, data) {
   ns <- session$ns
   

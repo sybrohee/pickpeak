@@ -3,6 +3,10 @@ library(shiny)
 library(DT)
 
 # module UI function
+
+#' module dataExporterFilter UI function
+#' @importFrom shiny NS uiOutput
+#' @export
 dataExporterFilterUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -13,6 +17,8 @@ dataExporterFilterUI <- function(id){
 }
 
 # module server function
+#' module dataExporterFilter server function
+#' @export
 dataExporterFilter <- function(input,output,session, fsa.data, selected.scale, exportTable) {
   ns <- session$ns
   output$exportType <- renderUI({

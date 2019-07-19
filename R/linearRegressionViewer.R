@@ -1,8 +1,8 @@
-library(plotly)
-library(shiny)
-library(DT)
+
 
 # module UI function
+#' module linearRegressionViewer  UI function
+#' @export
 linearRegressionViewerUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -12,6 +12,8 @@ linearRegressionViewerUI <- function(id){
 }
 
 # module server function
+#' module linearRegressionViewer  sever function
+#' @export
 linearRegressionViewer <- function(input, output, session, fsa.data) {
     ns <- session$ns
      

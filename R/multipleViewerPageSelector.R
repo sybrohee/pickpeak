@@ -1,6 +1,6 @@
-library(shiny)
 
-# module UI function
+#' module multipleViewerPageSelectorUI UI function
+#' @export
 multipleViewerPageSelectorUI <- function(id){
   ns <- NS(id)
   fluidPage(
@@ -15,7 +15,8 @@ multipleViewerPageSelectorUI <- function(id){
   ) 
 }
 
-# module server function
+#' module multipleViewerPageSelectorUI server function
+#' @export
 multipleViewerPageSelector <- function(input,output,session, data, selected.samples, parameters) {
   ns <- session$ns
 

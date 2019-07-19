@@ -1,8 +1,7 @@
 
-library(shiny)
-library(DT)
 
-# module UI function
+#' module peakAnalyzer UI function
+#' @export
 peakAnalyzerUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -12,7 +11,8 @@ peakAnalyzerUI <- function(id){
   )
 }
 
-# module server function
+#' module peakAnalyzer server function
+#' @export
 peakAnalyzer <- function(input,output,session,selected.scale, parameters, data, global.parameters, predefined.parameters) {
   ns <- session$ns
   

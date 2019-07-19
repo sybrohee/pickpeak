@@ -2,7 +2,8 @@
 library(shiny)
 library(DT)
 
-# module UI function
+#' module heightSelector UI function
+#' @export
 heightSelectorUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -12,7 +13,8 @@ heightSelectorUI <- function(id){
 		
 }
 
-# module server function
+#' module heightSelector server function
+#' @export
 heightSelector <- function(input,output,session, data, selected.dyes) {
   ns <- session$ns
 

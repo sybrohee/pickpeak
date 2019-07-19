@@ -2,7 +2,11 @@ library(plotly)
 library(shiny)
 library(DT)
 library(XLConnect)
-# module UI function
+
+
+#' module dataExporter UI function
+#' @importFrom shiny NS uiOutput
+#' @export
 dataExporterUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -16,6 +20,8 @@ dataExporterUI <- function(id){
 
 
 # module server function
+#' module dataExporter server function
+#' @export
 dataExporter <- function(input, output, session,  dataExporterFilters, annotated.peaks, fsa.data,colors, markers, markersList, seqdates) {
     ns <- session$ns
     table <- reactiveValues(activeTable = NULL)

@@ -1,8 +1,10 @@
 
-library(shiny)
-library(DT)
 
 # module UI function
+#' module analysisParameter UI function
+
+#' @importFrom shiny NS uiOutput
+#' @export
 analysisParametersUI<- function(id) {
   ns <- NS(id)
   uiOutput(ns("openModalBtn"))
@@ -14,6 +16,10 @@ analysisParametersUI<- function(id) {
 
 
 # module server function
+#' module analysisParameter server function
+#' @importFrom shiny observeEvent showModal removeModal actionButton modalDialog selectInput renderUI 
+#' @export
+
 analysisParameters <- function(input,output,session, data, predefined.parameters) {
   ns <- session$ns
   default.min.peak <- 2000
@@ -55,7 +61,7 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
     req(data()$data$intensities$id)
     actionButton(ns("openModalBtn"), "Sample settings")
   })
-
+  #' @export
   myModal <- function() {
     
     modalDialog(
@@ -176,7 +182,7 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
   
   observeEvent(input$submitModalButton, {
     save.values()
-	removeModal()
+	shiny::removeModal()
   })
   
   observeEvent(input$cloneButton, {
@@ -222,8 +228,7 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 	)
   })
 
-
-  save.values <- function() {
+  save.values <- reactive( {
     req(data()$data$intensities$id)
 	req(data()$data$dyes)
 	req(input$sampleIdSelector)
@@ -242,8 +247,8 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 	
 	parameters$sample.min.peak[[parameters$idi]] <- input$defaultMinPeak
 	parameters$idi <- input$sampleIdSelector    
-  }
-  
+  })
+
   collectMinPeakHeights <- reactive({
 	result <- list()
 	req(data()$data$dyes)
@@ -276,3 +281,4 @@ analysisParameters <- function(input,output,session, data, predefined.parameters
 
 
 }
+

@@ -1,14 +1,15 @@
 
-library(shiny)
-library(DT)
 
-# module UI function
+
+#' module dyeSelector server function
+#' @export
 dyeSelectorUI <- function(id){
   ns <- NS(id)
   uiOutput(ns("selectedDyes"))
 }
 
-# module server function
+#' module dyeSelector UI function
+#' @export
 dyeSelector <- function(input,output,session, data) {
   ns <- session$ns
   output$selectedDyes <- renderUI({

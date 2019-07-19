@@ -4,6 +4,9 @@ library(shinyWidgets)
 library(DT)
 
 # module UI function
+#' module singleExperimentViewer UI function
+
+#' @export
 singleExperimentViewerUI <- function(id){
   ns <- NS(id)
   fluidPage(
@@ -24,6 +27,9 @@ singleExperimentViewerUI <- function(id){
 }
 
 # module server function
+#' module singleExperimentViewer server function
+
+#' @export
 singleExperimentViewer <- function(input, output, session, fsa.data, colors, singleExperimentFilterDyes, singleExperimentFilterExp, singleExperimentYaxis, singleExperimentFilterSystem, singleExperimentSystemDyeSelector,allSystemsSameLine,minValueFilterThresholdField, minValueFilterThresholdButton, includeExcludeButton, ladder.sample) {
     ns <- session$ns
     proxyFO <- dataTableProxy("filteredOutPeaks")
@@ -373,7 +379,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
 		xrange.values <- range.values[grepl("^x", names(range.values))]
 		xrange <- range(xrange.values)
 		print(paste("Adding a peak for ", systemi, "from", paste(xrange, collapse = " to ")))
-		addpeaks$system <- system
+		addpeaks$system <- systemi
 		addpeaks$from <- xrange[1]
 		addpeaks$to <- xrange[2]
 		showModal(myAddPeakModal())
@@ -388,7 +394,7 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
 				column(11,
 					fluidRow(
 						fluidRow(
-							column(3, tags$b("system")), 
+							column(3, tags$b("System")), 
 							column(8, uiOutput(ns("system")))
 						),
 						br(),
@@ -429,9 +435,11 @@ singleExperimentViewer <- function(input, output, session, fsa.data, colors, sin
 		req(fsa.data$markers$system)
         systems <- sort(unique(fsa.data$markers$system))
         systemi <- systems[1]
+        print(systemi)
         if (!is.null(addpeaks$system)) {
           systemi <- addpeaks$system
         }
+        print(systemi)
         tags$div(id = "inline", selectInput(ns("system"), label = "",  choices = systems, selected = systemi))
     })
     output$startsize <- renderUI({

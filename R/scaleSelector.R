@@ -2,7 +2,8 @@
 library(shiny)
 library(DT)
 
-# module UI function
+#' module scaleSelector UI function
+#' @export
 scaleSelectorUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -11,7 +12,8 @@ scaleSelectorUI <- function(id){
   )
 }
 
-# module server function
+#' module scaleSelector server function
+#' @export
 scaleSelector <- function(input,output,session, data, scales, parameters, predefined.parameters) {
   values <- reactiveValues(scalingDye = 'None', selectedScale = 'Raw')
   

@@ -1,8 +1,9 @@
 
-library(shiny)
-library(DT)
 
 # module UI function
+#' module selectedPeakDisplayer  UI function
+#' @export
+      
 selectedPeakDisplayerUI <- function(id){
   ns <- NS(id)
   fluidRow(
@@ -13,7 +14,9 @@ selectedPeakDisplayerUI <- function(id){
 
 }
 
-# module server function
+# module UI function
+#' module selectedPeakDisplayer  server function
+#' @export
 selectedPeakDisplayer <- function(input,output, session, selectedPeak) {
   ns <- session$ns
   selected.peak.table <- reactive({
@@ -30,7 +33,7 @@ selectedPeakDisplayer <- function(input,output, session, selectedPeak) {
     "<b>Selected peak</b><br>"
   })
   
-  output$selectedPeakDT <- renderDataTable({
+  output$selectedPeakDT <- DT::renderDataTable({
     req(selectedPeak())
     req(selected.peak.table())
     datatable(selected.peak.table(),

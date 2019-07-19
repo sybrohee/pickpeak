@@ -2,7 +2,9 @@ library(plotly)
 library(shiny)
 library(DT)
 
-# module UI function
+#' module multipleExperimentViewer UI function
+
+#' @export
 multipleExperimentViewerUI <- function(id){
   ns <- NS(id)
   fluidPage(
@@ -20,7 +22,9 @@ multipleExperimentViewerUI <- function(id){
 
 }
 
-# module server function
+#' module multipleExperimentViewer server function
+
+#' @export
 multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, selected.samples, selected.height , selected.width, selected.scale, selected.dyes, nbSamplesPerPage, pageNb, above.samples, pageRefreshed) {
     ns <- session$ns
     curves.description <- reactiveValues(curves = NULL)
@@ -38,8 +42,6 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 
    
     multipleExperimentPlot.data <- eventReactive(pageRefreshed(), {
-			print("MERDE EN BOIIIIITE")
-			print(pageRefreshed())
 			req(length(selected.samples$selectedSamples()) > 0)
 			list(
 				fsa.data = fsa.data,
@@ -217,6 +219,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
         ids <- unique(intensities$id)
         ids <- sort(intersect(ids, selected.samples))
         ids <- setdiff(ids, above.samples)
+        print (selected.dyes)
         channels <- selected.dyes
         nbAboveSamples <- length(above.samples)
 		nbSamplesPerPage <- nbSamplesPerPage- nbAboveSamples
