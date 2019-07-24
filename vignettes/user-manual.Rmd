@@ -37,7 +37,12 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Capillary electrophoresis 
-Capillary electrophoresis  is an alternative to conventional slab gel electrophoresis for the separation of DNA fragments. It offers a number of advantages over slab gel separations in terms of speed, resolution, sensitivity, and data handling. Separation times are generally only a few minutes and the DNA is detected either by UV absorption or by fluorescent labeling. The quantity of DNA required for separation is in the nanogram range. Single‐base resolution can be obtained on fragments up to several hundred base pairs. In the presence of appropriate standards, fragments can be accurately sized based on relative electrophoretic mobility. A protocol for the analysis of synthetic oligonucleotides in a flowable matrix is described in this unit [@Smith2003].
+Capillary electrophoresis  is an alternative to conventional lab gel electrophoresis for the separation of DNA fragments. It offers a number of advantages over slab gel separations in terms of speed, resolution, sensitivity, and data handling. Separation times are generally only a few minutes and the DNA is detected either by UV absorption or by fluorescent labeling. The quantity of DNA required for separation is in the nanogram range. Single‐base resolution can be obtained on fragments up to several hundred base pairs. In the presence of appropriate standards, fragments can be accurately sized based on relative electrophoretic mobility [@Smith2003].
+
+Pickpeak has been applied to data that were produced using two capillary electrophoresis sequencers, i.e.; 
+
+* Applied Biosystems 3730 DNA Analyzer
+* Applied Biosystems 3130 Genetic Analyzer
 
 ## Short presentation of the tool
 Starting from capillary electrophoresis result files (FSA files), pickpeak can display, scale, discover and annotate the peaks (Figures \@ref(fig:intro1) and \@ref(fig:intro2)).
@@ -48,6 +53,8 @@ Starting from capillary electrophoresis result files (FSA files), pickpeak can d
 
 
 # Before running pickpeak
+Pickpeak presents some configuration features, i.e., flat files are needed to make it work. When no file is provided at startup, Pickpeak will run with only the minimal parameters. As it is not aware of the scale or system, only the raw data can be visualized.
+
 
 ## Configuration files
 Examples of the configuration files are available in the package.
@@ -224,6 +231,8 @@ system.file( "configuration_files",'data','markers_bin_example.tab',package = 'p
 library(pickpeak)
 runShinyPackageApp("/path/to/configfile.json")
 ```
+
+When running the instruction ```runShinyPackageApp``` without arguments, the minimal options of pickpeak will be available (only visualization of the raw data). 
 Provided the configuration files are correct, the following image appears (Figure \@ref(fig:openingscreen)).
 
 ![Pickpeak opening screen(\#fig:openingscreen)](load_samples.png){width=500px}
@@ -231,7 +240,7 @@ Provided the configuration files are correct, the following image appears (Figur
 ## Loading, visualizing and formatting the samples
 
 To load the samples, click on the "Browse..." button in section "Select FSA file(s)". 
-There are demonstration files within the directory ```system.file( "data","xfra",package = 'pickpeak')```. These files were generated using a XXX with the Amplidex FMR1 kit ([Asuragen Genetics](https://asuragen.com/)) for diagnostics of the X-fragile syndrom. 
+There are demonstration files within the directory ```system.file( "data","xfra",package = 'pickpeak')```. These files were generated on capillary electrophoresis sequencers with the Amplidex FMR1 kit ([Asuragen Genetics](https://asuragen.com/)) for diagnostics of the X-fragile syndrom. 
 
 Once the samples are loaded, the screen should look like Figure \@ref(fig:demosamplesmev).
 
@@ -275,7 +284,7 @@ One can see on Figures \@ref(fig:scaling2) and  \@ref(fig:scaling3) that there i
 
 
 
-![Inferring the fragment length according to the migration time of the scaling fragments of knwon sizes (red) (\#fig:scaling2)](scaling_2.png){width=500px}
+![Inferring the fragment lengths according to the migration time of the scaling fragments of knwon sizes (red) (\#fig:scaling2)](scaling_2.png){width=500px}
 
 ![Comparison of the peak intensity between sample_1 and sample_2. Supplementary peak wrongly taken into account to compute the linear regression model to convert the migration time into DNA fragment lengths(\#fig:parasitic)](parasitic.png){width=500px}
 
@@ -287,9 +296,9 @@ Optionally, now that the length have been estimated, the peaks of each sample ca
 
 Peaks for all samples are also inferred during this last step. When a peak is discovered, a big dot is displayed on top of it.
 
-## Ladder samples
 
-In some capillary electrophoresis experiments, one or more ladder sample(s) are included. These samples contain and have a (bin) name for all the fragments of interest can be compared to the experiment fragments to infer their names. Ladder samples must be specified in the menu where custom analysis parameters were defined. A bin file must be specified in the markers.tab file (see above). As for the scaling fragments, the number of peaks must correspond to the number bins that are specified in the bin file.
+
+
 
 ## Predefined parameters
 
@@ -312,7 +321,7 @@ You must then click on save after the data have been entered.
 
 The single experiment viewer tab allows to focus on individual systems or peaks that have been detected (manually or automatically). It can remove non relevant peaks as well or add peaks that were missed in the previous peak detection steps. Beware, the single experiment viewer is only working if the raw data were scaled and if the detected peaks were matched with systems in the previous steps.
 
-The examples that will be depected on the following figures were not obtained using the example dataset as it does only contains one system and is less illustrative. Here, we make use of data generated using the PowerPlex ESX 17 kit for paternity testing developed by [Promega](http://www.promega.com).
+The examples that will be depected on the following figures were not obtained using the example dataset as it does only contains one system and is less illustrative. Here, we make use of data generated using the PowerPlex ESX 17 kit for paternity testing developed by [Promega](http://www.promega.com). Those file are available within the pickpeak R package (```system.file( "data","paternity",package = 'pickpeak')```)
 
 ### Single experiment viewer description.
 The Figure \@ref(fig:sevintro) shows the main screen of the single experiment viewer. The left part of the screen can be used to modify the view on the right side of the screen. Notably, one can select the system or the dyes that should be on the right side. The table in the middle contains the list of peaks that are to be seen on the right part. A click on one row in this table highlights the corresponds peaks in the view on the right (Figure \@ref(fig:peakselection)). A peak can also be selected by clicking on the dot on top of it. Information about the peak will then be available in a table on the left of the screen.
@@ -334,7 +343,8 @@ In case the detection method has been too sensitive, you can also exclude all th
 
 ![Single experiment viewer : peak addition (\#fig:peakaddition)](sev_addition.png){width=500px}
 
-If a peak has not been automatically detected, one can still add it to the list of selected peak. To this, select the small plotly icon "box select" on top of the figure with the peaks. Draw a box around the peak that you want to add. A window will open where you will have the possibility to precise the coordinates and the intensity of the peak as well as the system to which it belongs (Figure  \@ref(fig:peakaddition)).
+If a peak has not been automatically detected, one can still add it to the list of selected peak. To this, select the small plotly icon ```box select``` on top of the figure with the peaks. Draw a box around the peak that you want to add. A window will open where you will have the possibility to precise the coordinates and the intensity of the peak as well as the system to which it belongs (Figure  \@ref(fig:peakaddition)).
+
 
 ## Data export
 
@@ -345,11 +355,32 @@ Data can be exported to be analyzed with other tools (tab Data Export). The expo
 * Peaks : List of all detected peaks. If it corresponds to a given system, it is indicated. 
 * Systems : List of all peaks detected within a system (one system per line) (Figure  \@ref(fig:export)).
 
+## Analysis of data presenting ladder samples
+
+In some capillary electrophoresis experiments, one or more ladder sample(s) are included. These samples contain a set of named peaks (bin) that may or may not correspond to actual peaks in the sample of interest. Ladder samples must be specified in the menu where custom analysis parameters were defined. A bin file must be specified in the ```markers.tab``` file (see above). As for the scaling fragments, the number of peaks must correspond to the number bins that are specified in the bin file.
+
+### Loading samples
+For this example, we will load the samples within the paternity directory of the package (```system.file( "data","paternity",package = 'pickpeak')```). These were generated using the PowerPlex ESX 17 kit for paternity testing developed by [Promega](http://www.promega.com). 
+
+On top of the other parameters (described above) however, we must indicate to the program that the sample called ladder is the ladder sample.
+
+To this, we must select ```Custom``` analysis parameters and click ```Sample settings```. In the window that opened, we must then select the ladder sample and click on the ```ladder sample``` box at the bottom of the window, then we can click on submit (Figure  \@ref(fig:ladder1)).
+
+![Specification of the type of sample for a ladder sample (\#fig:ladder1)](ladder1.png){width=300px}
+
+We can now run the scaling as shown above.
+
+If we apply the standard parameters values (minimal peak detection at 900), there might be systems for which the number of annotated bins and the number of bins is not the same (Figure \@ref(fig:laddererror)). The minimum intensity value for peak detection can be changed in the ```sample settings``` dialogox box. Here, when setting the minimum peak height to 2000 fot the PET (red) dye, we can already fix some of the ladder issues.
+
+![Number of detected bins in the ladder samples and of annotated bins does not correspond for systems FGA and SE33 (\#fig:laddererror)](laddererror.png){width=300px}
+
+
+In the single experiment viewer, having defined the ladder sample allows to name the peaks. The bins are greyed zone on each of the plots. Hover the mouse over the top of the grey zone displays the name of the bin.
+
+![Example of peak naming using the ladder sample (system AMEL) (\#fig:ladder2)](ladder2.png){width=400px}
+
 ![Data export(\#fig:export)](export.png){width=500px}
 
-# Misceallanous
-
-## Create a direct link on the Desktop (windows user only)
 
 
 

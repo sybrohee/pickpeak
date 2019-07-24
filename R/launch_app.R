@@ -13,7 +13,7 @@
 
 #' @examples \donttest{runShinyPackageApp(launch_param = "/path/to/jsonparamfile")}
 #' @export
-runShinyPackageApp <- function(launch_param, ...) {
+runShinyPackageApp <- function(launch_param = NULL, ...) {
 
     .GlobalEnv$launch_param <- launch_param
     on.exit(rm(launch_param, envir=.GlobalEnv))

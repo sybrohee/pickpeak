@@ -229,9 +229,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 		}
 		startindex <- 1+((page.nb-1)*nbSamplesPerPage)
 		endindex <- min(startindex+nbSamplesPerPage-1, length(ids))
-		# print(above.samples())
-		# print(startindex)
-		# print(endindex)
+
 		ids <- c(above.samples, ids[startindex:endindex])
 
         minval <- min(intensities[,..channels])               

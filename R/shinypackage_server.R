@@ -1,9 +1,19 @@
 #' @export
 shinypackage_server <- function(input, output, session) {
+	  global.parameters <- list()
+	  if (is.null(launch_param) || launch_param == "") {
+		## No param file specified, only default parameter will be used
+		temp.dir <- tempdir();
+		print(system.file( "configuration_files",package = 'pickpeak'))
+		file.copy(system.file( "configuration_files",package = 'pickpeak'), temp.dir,recursive = T )
+		global.parameters$datadir <- file.path(temp.dir, "configuration_files", "data");
+		global.parameters$predefined_parameters <- file.path(temp.dir, "configuration_files", "config", "predef.tab");
+	  } else {
+		global.parameters <- fromJSON(file = launch_param)
 
-	  global.parameters <- fromJSON(file = launch_param)
-	    colors <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "colors.json"))
-	    scales <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "scales.json"))
+	  }
+	  colors <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "colors.json"))
+	  scales <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "scales.json"))		  
       fsa.data <- reactiveValues(data = NULL, standardized.data = NULL, bins = NULL, markers = NULL, peaks = NULL, annotatedpeaks = NULL, binpeaks = NULL)
       predefined.parameters <- reactiveValues(parameters = NULL, selection = NULL)
 
@@ -130,7 +140,7 @@ shinypackage_server <- function(input, output, session) {
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
         # print(fsa.data$markers)
-        bin.file <- file.path("www","data", "markers",selected.analysis$markersList()[marker.file == basename(selected.analysis$selectedMarkers())]$bin.file)
+        bin.file <- file.path(global.parameters$datadir,'markers',selected.analysis$markersList()[marker.file == basename(selected.analysis$selectedMarkers())]$bin.file)
         ladder.samples <- vector()
         ids <- names(parameters$ladderSample())
 		for (id in ids) {
@@ -143,6 +153,7 @@ shinypackage_server <- function(input, output, session) {
 
 
         if (file.exists(bin.file) && length(ladder.samples) > 0) {
+
           markers.bins <-  read.bin.file(bin.file)
 		  peaks.bin <- markedpeaks.to.real.bins(markers.bins, peaks, ladder.samples)
 		  if (length(peaks.bin$error) > 0) {

@@ -1,6 +1,3 @@
 analysis	marker.file	bin.file	runName
-aneuploidies	markers_qstr_elucigene.tab	NA	Aneu
-paternity_v16	markers_PowerPlex_ESX_16_v3.0.tab	PowerPlex_ESX_Bins_IDX_v3.0_16.txt	Pat
-paternity_v17	markers_PowerPlex_ESX_17_v3.0.tab	PowerPlex_ESX_Bins_IDX_v3.0_17.txt	Pat
 amplidex_xfra	markers_Amplidex_FMR1.tab	NA	Xfra
-elucigene_muco	markers_Elucigene_MUCO50.tab	NA	Muco
+paternity_v17	markers_PowerPlex_ESX_17_v3.0.tab	PowerPlex_ESX_Bins_IDX_v3.0_17.txt	Pat
