@@ -1,0 +1,5 @@
+system	cytoband	start.pos	end.pos	color	dye
+Normal	Normal	304	377	blue	6-FAM
+Gray	Gray	377	606	blue	6-FAM
+PM	PM	606	1010	blue	6-FAM
+FM	FM	1010	1500	blue	6-FAM
