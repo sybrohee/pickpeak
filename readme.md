@@ -1,4 +1,4 @@
-# Pickpeak : A R/Shiny to analyze the capillary electropheresis results
+# Pickpeak : A R/Shiny package to analyze the capillary electropheresis results
 
 ## Installation
 ### Prerequesites 
