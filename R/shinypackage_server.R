@@ -26,7 +26,6 @@ shinypackage_server <- function(input, output, session) {
       )
 
   observeEvent(selected.samples$selectedSamples,  {
-
 		fsa.data$standardized.data <- NULL
 		fsa.data$bins <- NULL
 		fsa.data$markers <-  NULL
@@ -34,7 +33,7 @@ shinypackage_server <- function(input, output, session) {
 		fsa.data$binpeaks <- NULL
 		predefined.parameters$parameters <- NULL
 		predefined.parameters$selection  <- NULL
-		predefined.parameters$loadParamButton <- NULL		
+		predefined.parameters$loadParamButton <- NULL
       })
       
       observeEvent(lsParams$loadParamButton(), {
@@ -59,12 +58,12 @@ shinypackage_server <- function(input, output, session) {
 	  dataExporterFilters <- callModule(dataExporterFilter, "mydataExportFilter",reactive(fsa.data), selected.scale)
 	  selected.peaks <- reactiveValues(selected.peak = NULL, exportPeaksTable = NULL, annotatedPeaks = NULL)
       singlePeakAnalyzer <- reactiveValues(minValueFilterThresholdField = NULL, minValueFilterThresholdButton = NULL,includeExcludeButton = NULL)      
-
-
+	  output$files <- reactive({print(length(selected.samples$selectedSamples()$datapath)); length(selected.samples$selectedSamples()$datapath)})
+	  outputOptions(output, 'files', suspendWhenHidden = FALSE)
       observe({
 	    
         req(selected.samples$selectedSamples()$datapath)
-
+        
         fsa.data$data <- my.read.fsa(selected.samples$selectedSamples()$datapath)
 		fsa.data$standardized.data <- NULL
 		fsa.data$bins <- NULL

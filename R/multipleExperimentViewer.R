@@ -1,7 +1,3 @@
-library(plotly)
-library(shiny)
-library(DT)
-
 #' module multipleExperimentViewer UI function
 
 #' @export
@@ -11,7 +7,11 @@ multipleExperimentViewerUI <- function(id){
     fluidRow(
         column(10,
             plotlyOutput(ns("multipleExperimentPlot"), height = "800px"),
-            downloadButton(ns("export"), "Export")
+            conditionalPanel(
+				condition = "output.loadedSamples > 0",
+				downloadButton(ns("export"), "Export"),
+				ns = ns
+			)
         ),
         column(2, 
             DT::dataTableOutput(ns("onClick"))
@@ -39,7 +39,8 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 		return (result.vec)
     })   
     
-
+	output$loadedSamples <- reactive({print("MLEREAERA");length(selected.samples$selectedSamples())})
+	outputOptions(output, 'loadedSamples', suspendWhenHidden = FALSE)
    
     multipleExperimentPlot.data <- eventReactive(pageRefreshed(), {
 			req(length(selected.samples$selectedSamples()) > 0)
@@ -123,7 +124,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
     
 	output$export <- downloadHandler(
 		filename = function(file) {
-		"muc.pdf"
+		basename(tempfile(pattern = "exportplot_", tmpdir = "", fileext = '.pdf'))
 		},
 		content = function(file) {
 			

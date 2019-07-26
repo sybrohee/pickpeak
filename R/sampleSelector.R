@@ -15,8 +15,9 @@
 #' @keywords internal
 sampleSelectorUI <- function(id){
   ns <- NS(id)
+
   tagList(
-      fileInput(ns("fileList"), "Select FSA file(s)",
+      fileInput( ns("fileList"), "Select FSA file(s)",
                  multiple = TRUE,
                  accept = c("fsa"))
     )

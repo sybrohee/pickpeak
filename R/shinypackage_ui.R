@@ -21,64 +21,71 @@ shinypackage_ui <- function(launch_param) {
                 column(11, 
 					fluidRow(
 					  column(11, sampleSelectorUI("mysampleselector")),
-						column(11, id = 'peakFilterPanel',
-							fluidRow(
-								column(11,
-									uiOutput("analysistype")
-								)
-							),
-  							conditionalPanel(condition = "input.analysistype == 'custom'",
+					  conditionalPanel(
+							condition = "output.files > 0",
+							column(11, id = 'peakFilterPanel',
 								fluidRow(
-									column(12, 
-											analysisParametersUI("myAnalysisParameters"),
-											scaleSelectorUI("myscaleselector"),
-											peakAnalyzerUI("mypeakanalyzer")
+									column(11,
+										uiOutput("analysistype")
+									)
+								),
+								conditionalPanel(condition = "input.analysistype == 'custom'",
+									fluidRow(
+										column(12, 
+												analysisParametersUI("myAnalysisParameters"),
+												scaleSelectorUI("myscaleselector"),
+												peakAnalyzerUI("mypeakanalyzer")
+										)
+									)
+								),
+								conditionalPanel(condition = "input.analysistype == 'predefined'",
+									fluidRow(
+										column(12, uiOutput("predefinedparametersTitle"))
+									),
+									fluidRow(
+										column(12, loadSaveParamsUI("myloadSaveParams"))
 									)
 								)
-							),
-							conditionalPanel(condition = "input.analysistype == 'predefined'",
-								fluidRow(
-									column(12, uiOutput("predefinedparametersTitle"))
-								),
-								fluidRow(
-									column(12, loadSaveParamsUI("myloadSaveParams"))
-								)
-							)
 
+							)
 						)
 					),
                     HTML("<br>"),
+                    
                     fluidRow(
-						column(11, id = 'peakFilterPanel',
-							fluidRow(
-								column(4, dyeSelectorUI("mydyeselector")),
-								column(8, multipleViewersampleSelectorUI("mymultipleViewersampleSelector"))
-							),
-							fluidRow(
-								column(12, multipleViewerPageSelectorUI("mymultipleviewerpageselector"))
-							),							
-							fluidRow(
-								column(1, fluidRow(" ")),
-								column(9, 
-									fluidRow(
-										heightSelectorUI("myheightselector"),
-										widthSelectorUI("mywidthselector")
-									)
-								
+					  conditionalPanel(
+							condition = "output.files > 0",                    
+							column(11, id = 'peakFilterPanel',
+								fluidRow(
+									column(4, dyeSelectorUI("mydyeselector")),
+									column(8, multipleViewersampleSelectorUI("mymultipleViewersampleSelector"))
 								),
-								column(1, fluidRow(" "))
-							),
-							fluidRow(
-								column(1, fluidRow(" ")),
-								column(9, 
-									fluidRow(								
-										multipleExperimentsRefresherUI("mymultipleexperimentsrefresher")
+								fluidRow(
+									column(12, multipleViewerPageSelectorUI("mymultipleviewerpageselector"))
+								),							
+								fluidRow(
+									column(1, fluidRow(" ")),
+									column(9, 
+										fluidRow(
+											heightSelectorUI("myheightselector"),
+											widthSelectorUI("mywidthselector")
+										)
+									
+									),
+									column(1, fluidRow(" "))
+								),
+								fluidRow(
+									column(1, fluidRow(" ")),
+									column(9, 
+										fluidRow(								
+											multipleExperimentsRefresherUI("mymultipleexperimentsrefresher")
+										)
 									)
 								)
 							)
 						)
+					
 					)
-
                 )
 
                 
