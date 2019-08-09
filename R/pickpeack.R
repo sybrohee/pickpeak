@@ -19,6 +19,6 @@ runShinyPackageApp <- function(launch_param = NULL, ...) {
     on.exit(rm(launch_param, envir=.GlobalEnv))
 
 
-    runApp(system.file("shiny",package="pickpeakio"),  ...)
+    runApp(system.file("shiny",package="pickpeak"),  ...)
 }
 
