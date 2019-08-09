@@ -14,9 +14,9 @@ library(shinyWidgets)
 
 
 shinypackage_server <- function(input, output, session) {
-
 	  global.parameters <- list()
-	  if (is.null(launch_param) || launch_param == "") {
+	  
+	  if (!exists("launch_param") || is.null(launch_param) || launch_param == "") {
 		## No param file specified, only default parameter will be used
 		temp.dir <- tempdir();
 		config.file.path <- file.path(system.file( "shiny",package = 'pickpeak'), "www", "configuration_files")
