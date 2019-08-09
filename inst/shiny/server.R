@@ -19,10 +19,10 @@ shinypackage_server <- function(input, output, session) {
 	  if (is.null(launch_param) || launch_param == "") {
 		## No param file specified, only default parameter will be used
 		temp.dir <- tempdir();
-		print(system.file( "configuration_files",package = 'pickpeak'))
-		file.copy(system.file( "configuration_files",package = 'pickpeak'), temp.dir,recursive = T )
-		global.parameters$datadir <- file.path(temp.dir, "configuration_files", "data");
-		global.parameters$predefined_parameters <- file.path(temp.dir, "configuration_files", "config", "predef.tab");
+		config.file.path <- file.path(system.file( "shiny",package = 'pickpeak'), "www", "configuration_files")
+		file.copy(config.file.path, temp.dir,recursive = T )
+		global.parameters$datadir <- file.path(temp.dir,  "configuration_files", "data");
+		global.parameters$predefined_parameters <- file.path(temp.dir,"configuration_files", "config", "predef.tab");
 	  } else {
 		global.parameters <- fromJSON(file = launch_param)
 
