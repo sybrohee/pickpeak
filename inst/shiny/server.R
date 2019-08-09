@@ -1,11 +1,26 @@
 #' @export
+
+library(shiny)
+library(data.table)
+library(plotly)
+library(shinyalert)
+library(rjson)
+library(DT)
+library(XLConnect)
+library(seqinr)
+library(shinyjs)
+library(pracma)
+library(shinyWidgets)
+
+
 shinypackage_server <- function(input, output, session) {
+
 	  global.parameters <- list()
 	  if (is.null(launch_param) || launch_param == "") {
 		## No param file specified, only default parameter will be used
 		temp.dir <- tempdir();
-		print(system.file( "configuration_files",package = 'pickpeak'))
-		file.copy(system.file( "configuration_files",package = 'pickpeak'), temp.dir,recursive = T )
+		print(system.file( "configuration_files",package = 'pickpeakio'))
+		file.copy(system.file( "configuration_files",package = 'pickpeakio'), temp.dir,recursive = T )
 		global.parameters$datadir <- file.path(temp.dir, "configuration_files", "data");
 		global.parameters$predefined_parameters <- file.path(temp.dir, "configuration_files", "config", "predef.tab");
 	  } else {
@@ -16,16 +31,33 @@ shinypackage_server <- function(input, output, session) {
 	  scales <- fromJSON(file = file.path(global.parameters$datadir, "dyes", "scales.json"))		  
       fsa.data <- reactiveValues(data = NULL, standardized.data = NULL, bins = NULL, markers = NULL, peaks = NULL, annotatedpeaks = NULL, binpeaks = NULL)
       predefined.parameters <- reactiveValues(parameters = NULL, selection = NULL)
-
+	  
       selected.samples <- callModule(sampleSelector, "mysampleselector")
+      callModule(reinitializer, "myreinitializer")
+      
+      
+      all.selected.samples <- reactiveValues(selected.samples = NULL, done = F)
+      sample.load.initializer <- callModule(samplesLoadInitializer, "mysamplesloadinitializer",reactive(all.selected.samples$selected.samples))
+      
       lsParams <- callModule(loadSaveParams, "myloadSaveParams", reactive(fsa.data),global.parameters)
       
       observeEvent(lsParams$openModalBtn(), {
 			  updateSelectInput(session, inputId = "analysistype", selected = "custom")
 		    }
       )
+	  output$mode <- reactive({
+		req(!is.null(sample.load.initializer$loadButton()))
 
-  observeEvent(selected.samples$selectedSamples,  {
+		if (sample.load.initializer$loadButton() == 0) {
+			return ("loading")
+			
+		} else {
+			return("analysis")
+		}
+	  })
+	  outputOptions(output, 'mode', suspendWhenHidden = FALSE)
+
+  observeEvent(selected.samples$selectedSamples(),  {
 		fsa.data$standardized.data <- NULL
 		fsa.data$bins <- NULL
 		fsa.data$markers <-  NULL
@@ -34,6 +66,10 @@ shinypackage_server <- function(input, output, session) {
 		predefined.parameters$parameters <- NULL
 		predefined.parameters$selection  <- NULL
 		predefined.parameters$loadParamButton <- NULL
+		
+
+		all.selected.samples$selected.samples <- rbindlist(list(all.selected.samples$selected.samples,selected.samples$selectedSamples()),use.names = T, fill = F, idcol = F)
+		
       })
       
       observeEvent(lsParams$loadParamButton(), {
@@ -58,13 +94,16 @@ shinypackage_server <- function(input, output, session) {
 	  dataExporterFilters <- callModule(dataExporterFilter, "mydataExportFilter",reactive(fsa.data), selected.scale)
 	  selected.peaks <- reactiveValues(selected.peak = NULL, exportPeaksTable = NULL, annotatedPeaks = NULL)
       singlePeakAnalyzer <- reactiveValues(minValueFilterThresholdField = NULL, minValueFilterThresholdButton = NULL,includeExcludeButton = NULL)      
-	  output$files <- reactive({print(length(selected.samples$selectedSamples()$datapath)); length(selected.samples$selectedSamples()$datapath)})
+	  output$files <- reactive({length(all.selected.samples$selected.samples$datapath)})
+
+	  
 	  outputOptions(output, 'files', suspendWhenHidden = FALSE)
+	  
+	  selected.samples.done <- F
       observe({
 	    
-        req(selected.samples$selectedSamples()$datapath)
-        
-        fsa.data$data <- my.read.fsa(selected.samples$selectedSamples()$datapath)
+        req(all.selected.samples$selected.samples$datapath)
+        fsa.data$data <- my.read.fsa(all.selected.samples$selected.samples$datapath)
 		fsa.data$standardized.data <- NULL
 		fsa.data$bins <- NULL
 		fsa.data$markers <-  NULL
@@ -111,10 +150,10 @@ shinypackage_server <- function(input, output, session) {
         selected.width <- callModule(widthSelector, "mywidthselector", reactive(fsa.data), selected.scale)      
 
       })
-	  callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data, colors, multipleViewerSamplesSelected, selected.height, selected.width, selected.scale, selected.dyes, reactive(pageSelected$samplesPerPage()), reactive(pageSelected$pageNb()), reactive(parameters$aboveSample()), pageRefreshed$refreshButton)
+	  callModule(multipleExperimentViewer, "myMultipleExperimentViewer", fsa.data, colors, multipleViewerSamplesSelected, selected.height, selected.width, selected.scale, selected.dyes, reactive(pageSelected$samplesPerPage()), reactive(pageSelected$pageNb()), reactive(parameters$aboveSample()), pageRefreshed$refreshButton, sample.load.initializer$loadButton)
      
       observe({
-        req(selected.samples$selectedSamples()$datapath)
+        req(all.selected.samples$selected.samples$datapath)
         callModule(linearRegressionViewer, "myLinearRegressionViewer", fsa.data)
       })
       
@@ -138,7 +177,6 @@ shinypackage_server <- function(input, output, session) {
         req(is.null(fsa.data$standardized.data$error))
         markers <- fread(selected.analysis$selectedMarkers())
         fsa.data$markers <- markers
-        # print(fsa.data$markers)
         bin.file <- file.path(global.parameters$datadir,'markers',selected.analysis$markersList()[marker.file == basename(selected.analysis$selectedMarkers())]$bin.file)
         ladder.samples <- vector()
         ids <- names(parameters$ladderSample())

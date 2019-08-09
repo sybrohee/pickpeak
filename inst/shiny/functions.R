@@ -216,6 +216,7 @@ scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500
     scalei <- scales[[ladder]]
 
     for (idi in ids) {
+		print("TUPUESDUCUL")
         minval <- minpeakheights[[idi]][[standard.dye]]
         peaks.dt <- data.table(pracma::findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = minval, zero = "+"))
         if (nrow(peaks.dt) < length(scalei)) {
@@ -250,6 +251,7 @@ scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500
 	results$models <- models
 	results$peaks <- peaks
 	results$error <- NULL
+	print(results$intensities)
   } else {
 	results$intensities <- intensities
 	results$models <- NULL

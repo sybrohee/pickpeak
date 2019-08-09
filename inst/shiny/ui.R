@@ -1,4 +1,39 @@
+# library(shiny)
+# library(data.table)
+# library(plotly)
+# library(shinyalert)
+# library(rjson)
+# library(DT)
+# library(XLConnect)
+# library(seqinr)
+# library(shinyjs)
+# library(pracma)
+# library(shinyWidgets)
 
+source("analysisParameters.R")
+source("dataExporterFilter.R")
+source("dataExporter.R")
+source("dyeSelector.R")
+source("exportPeaks.R")
+source("functions.R")
+source("heightSelector.R")
+source("linearRegressionViewer.R")
+source("loadSaveParams.R")
+source("multipleExperimentsRefresher.R")
+source("multipleExperimentViewer.R")
+source("multipleViewerPageSelector.R")
+source("multipleViewerSampleSelector.R")
+source("peakAnalyzer.R")
+source("reinitializer.R")
+source("sampleSelector.R")
+source("samplesLoadInitializer.R")
+source("scaleSelector.R")
+source("selectedPeakDisplayer.R")
+source("server.R")
+source("singleExperimentFiltersAndLayouts.R")
+source("singleExperimentPeakAnalyzer.R")
+source("singleExperimentViewer.R")
+source("widthSelector.R")
 
 
 shinypackage_ui <- function(launch_param) {
@@ -12,17 +47,74 @@ shinypackage_ui <- function(launch_param) {
     useShinyalert(),
 
     fluidRow(
+		
         column(
             2, 
-            
+            column(11, id = 'peakFilterPanel',
+				conditionalPanel(
+					condition = "output.mode == 'loading'",
+					fluidRow(
+						column(12, 
+							sampleSelectorUI("mysampleselector")
+						
+						
+						) #only present when in loading mode
+					),
+					conditionalPanel(
+						condition = "output.files > 0",
+						fluidRow(
+							column(12, 
+								samplesLoadInitializerUI("mysamplesloadinitializer"),
+								fluidRow(
+									column(1,  HTML("<br>&nbsp;"))
+								)							
+							
+							) #only present when in loading mode and at least one file selected
+						)
+					)
+
+				)
+				
+				
+				
+  		    ),
+
+
             conditionalPanel(
                 condition = "input.tabs1 == 'Experiment viewer'",
                 column(1, fluidRow()),
                 column(11, 
 					fluidRow(
-					  column(11, sampleSelectorUI("mysampleselector")),
+
 					  conditionalPanel(
-							condition = "output.files > 0",
+							condition = "output.files > 0 && output.mode == 'analysis'",
+							
+							fluidRow(
+								column(1, 
+									fluidRow(
+										HTML("&nbsp;")
+									)
+								),							
+								column(4, 
+									fluidRow(
+										reinitializerUI("myreinitializer")
+									)
+								),
+								column(1, 
+									fluidRow(
+										HTML("&nbsp;")
+									)
+								),							
+								column(4, 
+									fluidRow(
+										multipleExperimentsRefresherUI("mymultipleexperimentsrefresher")
+									)
+								)
+							),
+							
+							fluidRow(HTML("<BR>")),
+							
+							
 							column(11, id = 'peakFilterPanel',
 								fluidRow(
 									column(11,
@@ -54,7 +146,7 @@ shinypackage_ui <- function(launch_param) {
                     
                     fluidRow(
 					  conditionalPanel(
-							condition = "output.files > 0",                    
+							condition = "output.files > 0 && output.mode == 'analysis'",                 
 							column(11, id = 'peakFilterPanel',
 								fluidRow(
 									column(4, dyeSelectorUI("mydyeselector")),
@@ -75,13 +167,9 @@ shinypackage_ui <- function(launch_param) {
 									column(1, fluidRow(" "))
 								),
 								fluidRow(
-									column(1, fluidRow(" ")),
-									column(9, 
-										fluidRow(								
-											multipleExperimentsRefresherUI("mymultipleexperimentsrefresher")
-										)
-									)
+									column(10, fluidRow(" "))
 								)
+
 							)
 						)
 					

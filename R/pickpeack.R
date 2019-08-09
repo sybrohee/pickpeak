@@ -18,10 +18,7 @@ runShinyPackageApp <- function(launch_param = NULL, ...) {
     .GlobalEnv$launch_param <- launch_param
     on.exit(rm(launch_param, envir=.GlobalEnv))
 
-    app <- shinyApp(
-        ui = shinypackage_ui,
-        server = shinypackage_server
-    )
-    runApp(app,  ...)
+
+    runApp(system.file("shiny",package="pickpeakio"),  ...)
 }
 

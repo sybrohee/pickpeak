@@ -19,6 +19,7 @@ sampleSelectorUI <- function(id){
   tagList(
       fileInput( ns("fileList"), "Select FSA file(s)",
                  multiple = TRUE,
+                 buttonLabel = "Add samples...",
                  accept = c("fsa"))
     )
 }
@@ -32,7 +33,6 @@ sampleSelector <- function(input,output,session) {
   return(
 	list(
 		selectedSamples = reactive(input$fileList)
-
 		)
 	)
 }

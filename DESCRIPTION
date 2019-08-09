@@ -3,7 +3,7 @@ Title: a simple shiny app
 Version: 0.9
 Authors@R: person("Sylvain", "Brohee", email = "sylvain.brohee@ipg.be", role = c("aut", "cre"))
 Description: A simple shiny app to analyze capillary electrophoresis results.
-License: GPL (>=3)
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1

@@ -25,7 +25,7 @@ multipleExperimentViewerUI <- function(id){
 #' module multipleExperimentViewer server function
 
 #' @export
-multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, selected.samples, selected.height , selected.width, selected.scale, selected.dyes, nbSamplesPerPage, pageNb, above.samples, pageRefreshed) {
+multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, selected.samples, selected.height , selected.width, selected.scale, selected.dyes, nbSamplesPerPage, pageNb, above.samples, pageRefreshed, samplesLoaded) {
     ns <- session$ns
     curves.description <- reactiveValues(curves = NULL)
     above.samples.vector <- reactive({
@@ -38,41 +38,60 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 		}
 		return (result.vec)
     })   
-    
-	output$loadedSamples <- reactive({print("MLEREAERA");length(selected.samples$selectedSamples())})
+	output$loadedSamples <- reactive(
+		{
+			req(pageRefreshed())
+			length(selected.samples$selectedSamples())
+		}
+	)
 	outputOptions(output, 'loadedSamples', suspendWhenHidden = FALSE)
-   
-    multipleExperimentPlot.data <- eventReactive(pageRefreshed(), {
-			req(length(selected.samples$selectedSamples()) > 0)
-			list(
-				fsa.data = fsa.data,
-				colors = colors,
-				selected.samples = selected.samples$selectedSamples(),
-				selected.min.height = selected.height$selectedMinHeight(),
-				selected.max.height = selected.height$selectedMaxHeight(),
-				selected.min.width = selected.width$selectedMinWidth(),
-				selected.max.width = selected.width$selectedMaxWidth(), 
-				selected.scale = selected.scale$selectedScale(), 
-				scaling.dye = selected.scale$scalingDye(),
-				selected.dyes = selected.dyes$selectedDyes(), 
-				nbSamplesPerPage = nbSamplesPerPage(), 
-				pageNb = pageNb(), 
-				above.samples =	above.samples.vector()
-			)
-    },ignoreNULL =F )
-    
+	
+	
+	
+	multipleExperimentPlot.data <- reactiveValues(datalist = NULL)
+	
+	observeEvent(pageRefreshed(), {
+
+		
+		myfsa.data <- list(
+			standardized.data = fsa.data$standardized.data,
+			bins = fsa.data$bins,
+			markers = fsa.data$markers,
+			peaks = fsa.data$peaks,
+			binpeaks = fsa.data$binpeaks
+		)
+		
+		multipleExperimentPlot.data$datalist <- list(
+					fsa.data =myfsa.data,
+					colors = colors,
+					selected.samples = selected.samples$selectedSamples(),
+					selected.min.height = selected.height$selectedMinHeight(),
+					selected.max.height = selected.height$selectedMaxHeight(),
+					selected.min.width = selected.width$selectedMinWidth(),
+					selected.max.width = selected.width$selectedMaxWidth(), 
+					selected.scale = selected.scale$selectedScale(), 
+					scaling.dye = selected.scale$scalingDye(),
+					selected.dyes = selected.dyes$selectedDyes(), 
+					nbSamplesPerPage = nbSamplesPerPage(), 
+					pageNb = pageNb(), 
+					above.samples =	above.samples.vector()
+				)
+	
+	
+	
+	})
+	
+
     output$multipleExperimentPlot <- renderPlotly({
-			plot.result <- myMultipleExperimentPlot(multipleExperimentPlot.data())
+
+			req(pageRefreshed())
+			plot.result <- myMultipleExperimentPlot2(multipleExperimentPlot.data$datalist)
 			curves.description$curves <- plot.result$curves
 			plot.result$sp
 		}
 	)
     
-#     myMultipleExperimentPlot.test <- function(nb) {
-# 		p <- plot_ly(x =  sample(1:10000, nb), y =  sample(1:10000, nb), type = 'scatter', mode = 'lines')
-# 		p
-#     }
-    
+
 
 
     
@@ -123,12 +142,14 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 	})        
     
 	output$export <- downloadHandler(
+		
 		filename = function(file) {
 		basename(tempfile(pattern = "exportplot_", tmpdir = "", fileext = '.pdf'))
 		},
 		content = function(file) {
 			
 		req(length(selected.samples$selectedSamples()) > 0)
+		
 		# print(file)
 		intensities <- fsa.data$standardized.data$intensities
 		peaks <- fsa.data$peaks
@@ -178,15 +199,19 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 }
 
 
-    myMultipleExperimentPlot <- function(multipleExperimentPlot.data)
-    {
-# 		print(multipleExperimentPlot.data)
+myMultipleExperimentPlot <- function(multipleExperimentPlot.data) {
+	p <- plot_ly()
+	return(list(sp = p, curves = c("1", "2")))
+}
 
+    myMultipleExperimentPlot2 <- function(multipleExperimentPlot.data)
+    {
+		
 		colors = multipleExperimentPlot.data$colors
 		fsa.data <- multipleExperimentPlot.data$fsa.data
 		selected.samples <- multipleExperimentPlot.data$selected.samples
 		selected.max.height <- multipleExperimentPlot.data$selected.max.height
-		selected.min.height<-multipleExperimentPlot.data$selected.min.height
+		selected.min.height <-multipleExperimentPlot.data$selected.min.height
 		selected.min.width <-multipleExperimentPlot.data$selected.min.width
 		selected.max.width <- multipleExperimentPlot.data$selected.max.width
 		selected.scale <- multipleExperimentPlot.data$selected.scale 
@@ -197,6 +222,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 		above.samples <-	multipleExperimentPlot.data$above.samples
 		
 		
+		req(fsa.data$standardized.data$intensities)
         f <- list(
             family = "sans serif",
             size = 10,
@@ -214,13 +240,16 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
         x.scale <- "sizes"
         x.peaks = "maxpos.size"
         if (selected.scale == 'Raw' || scaling.dye == 'None' ) {
+			print(selected.scale)
+			print(scaling.dye)
+
             x.scale = 'time'
             x.peaks = "peak.maxpos.time"
+#             print("TONPEREESTNEICI")
         } 
         ids <- unique(intensities$id)
         ids <- sort(intersect(ids, selected.samples))
         ids <- setdiff(ids, above.samples)
-        print (selected.dyes)
         channels <- selected.dyes
         nbAboveSamples <- length(above.samples)
 		nbSamplesPerPage <- nbSamplesPerPage- nbAboveSamples
@@ -233,7 +262,9 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
 
 		ids <- c(above.samples, ids[startindex:endindex])
 
+	
         minval <- min(intensities[,..channels])               
+
         plots <- list()
         layouts <- list()
         curves <- vector()
@@ -254,7 +285,7 @@ multipleExperimentViewer <- function(input, output, session, fsa.data,  colors, 
               }
 			  if (!is.null(fsa.data$peaks$bins) && length(channels) == 1) {
 # 				ladder.bins <- fsa.data$bins[dye == channel]
-				p <- add_trace(p, x = ladder.bins[dye == channel]$inferred.pos, opacity = 0.01, y =  rep(selected.height, nrow(ladder.bins[dye == channel])), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins[dye == channel]$bin, showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
+				p <- add_trace(p, x = ladder.bins[dye == channel]$inferred.pos, opacity = 0.01, y =  rep(selected.max.height, nrow(ladder.bins[dye == channel])), name = paste0(sample(letters, 2), collapse = ""), marker = list(size = 12, color = 'white',line = list(color = "white", width = 3)), text = ladder.bins[dye == channel]$bin, showlegend = F, hoverinfo = 'text',type = 'scattergl', mode = 'markers');
 				curves <- append(curves, paste("hover",idi,channel, sep = "%%"))
 			  }
 			  plots[[idi]] <- p
