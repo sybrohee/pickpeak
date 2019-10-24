@@ -233,7 +233,8 @@ runShinyPackageApp("/path/to/configfile.json")
 ```
 
 When running the instruction ```runShinyPackageApp``` without arguments, the minimal options of pickpeak will be available (only visualization of the raw data). 
-Provided the configuration files are correct, the following image appears (Figure \@ref(fig:openingscreen)).
+
+Provided the configuration files are correct and correspond to the data that are loaded, the following image appears (Figure \@ref(fig:openingscreen)).
 
 ![Pickpeak opening screen(\#fig:openingscreen)](load_samples.png){width=500px}
 
@@ -242,7 +243,11 @@ Provided the configuration files are correct, the following image appears (Figur
 To load the samples, click on the "Browse..." button in section "Select FSA file(s)". 
 There are demonstration files within the directory ```system.file( "data","xfra",package = 'pickpeak')```. These files were generated on capillary electrophoresis sequencers with the Amplidex FMR1 kit ([Asuragen Genetics](https://asuragen.com/)) for diagnostics of the X-fragile syndrom. 
 
-Once the samples are loaded, the screen should look like Figure \@ref(fig:demosamplesmev).
+Once the files has been selected, the user has the possibility to add files (e.g. from another directory). Once the files have been selected, one must click on Load and to visualize the samples (raw non standardized electrophoregrams) (Figure \@ref(fig:fileselection), one must then click on the "Refresh" button. The screen should look like Figure \@ref(fig:demosamplesmev).
+
+Beware, after each parameter change, one must hit the Refresh button in order to visualize the changes.
+
+![File selection (\#fig:fileselection)](file_selection.png){width=500px}
 
 ![Representation of the values for demo samples (\#fig:demosamplesmev)](first_screen.png){width=500px}
 

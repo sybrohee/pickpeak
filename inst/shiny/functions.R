@@ -216,11 +216,13 @@ scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500
     scalei <- scales[[ladder]]
 
     for (idi in ids) {
-		print("TUPUESDUCUL")
         minval <- minpeakheights[[idi]][[standard.dye]]
+        allpeaks.dt <- tail(data.table(pracma::findpeaks(intensities[id == idi][[standard.dye]],nups = 8, zero = "+")) )
+        
         peaks.dt <- data.table(pracma::findpeaks(intensities[id == idi][[standard.dye]], minpeakheight = minval, zero = "+"))
         if (nrow(peaks.dt) < length(scalei)) {
 			error <- paste("Not enough peaks detected for sample", idi);
+			error <- paste(error, "Min rawpeak height :", min(allpeaks.dt$peak.height));
 			intensities$sizes <- intensities$time
 			break;
         }
@@ -228,17 +230,21 @@ scale.timeseries <- function(fsa.raw.data, time = time, scales, ladder = 'LIZ500
         
         
         names(peaks.dt) <- c("peak.height", "peak.maxpos", "peak.startpos", "peak.minpos")
-        
+        names(allpeaks.dt) <- c("peak.height", "peak.maxpos", "peak.startpos", "peak.minpos")
         
         peaksdist <- abs(peaks.dt$peak.maxpos - c(peaks.dt$peak.maxpos[2:nrow(peaks.dt)], 0))
         peaks.dt$dist <- peaksdist
         valid.peaks <- peaks.dt[peaksdist > minDist,]
         median.height <- median(tail(valid.peaks$peak.height, n = length(scalei)))
-        
         valid.peaks <- valid.peaks[peak.height < 2*median.height]
         valid.peaks <- tail(valid.peaks, n = length(scalei))
+        if (nrow(valid.peaks) < length(scalei)) {
+			error <- paste("Not enough valid peaks detected for sample", idi);
+			error <- paste(error, "Min rawpeak height :", min(allpeaks.dt$peak.height));
+			intensities$sizes <- intensities$time
+			break;
+        }        
         valid.peaks$sizes <- scalei
-        # print(valid.peaks)
         lm.model <- lm(sizes~peak.maxpos, valid.peaks)
         intensities[id == idi, sizes := lm.model$coefficients[1] + time*lm.model$coefficients[2]]
         models[[idi]] <- lm.model
